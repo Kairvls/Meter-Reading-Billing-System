@@ -1,0 +1,42 @@
+type CacheEntry<T> = {
+  value: T;
+  expiresAt: number;
+};
+
+const store = new Map<string, CacheEntry<unknown>>();
+
+export function getCached<T>(key: string): T | null {
+  const entry = store.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    store.delete(key);
+    return null;
+  }
+  return entry.value as T;
+}
+
+export function setCached<T>(key: string, value: T, ttlMs = 30_000) {
+  store.set(key, { value, expiresAt: Date.now() + ttlMs });
+}
+
+export function invalidateCache(prefix?: string) {
+  if (!prefix) {
+    store.clear();
+    return;
+  }
+  for (const key of store.keys()) {
+    if (key.startsWith(prefix)) store.delete(key);
+  }
+}
+
+export function isQuotaError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    message.includes("RESOURCE_EXHAUSTED") ||
+    message.toLowerCase().includes("quota exceeded")
+  );
+}
+
+export function quotaErrorMessage() {
+  return "Firebase quota exceeded. Wait for the daily free-tier reset, or enable Blaze billing in Firebase Console. Reads are now cached briefly to reduce usage.";
+}
