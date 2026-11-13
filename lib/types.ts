@@ -2,7 +2,7 @@ export type PeriodFilter = "daily" | "weekly" | "monthly" | "annual" | "all";
 
 export type MeterRecordInput = {
   date: string; // YYYY-MM-DD
-  accountNumber: string;
+  accountNumber: string; // 00-0000-0000
   accountName: string;
   address: string;
   meterNumber: string;
@@ -10,6 +10,9 @@ export type MeterRecordInput = {
   remarks: string;
   contactNumber: string;
   landmark: string;
+  latitude: string;
+  longitude: string;
+  imageUrl: string; // compressed data URL or remote URL
   dateReceived: string;
 };
 

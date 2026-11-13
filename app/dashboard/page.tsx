@@ -29,6 +29,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { ExportSignatoriesDialog } from "@/components/dashboard/export-signatories-dialog";
+import { ImageViewDialog } from "@/components/dashboard/image-view-dialog";
 import { RecordFormDialog } from "@/components/dashboard/record-form-dialog";
 import { SortableRecordRow } from "@/components/dashboard/sortable-record-row";
 import { Button } from "@/components/ui/button";
@@ -108,6 +109,9 @@ export default function DashboardPage() {
   );
   const [importing, setImporting] = useState(false);
   const importInputRef = useRef<HTMLInputElement>(null);
+  const [imageViewRecord, setImageViewRecord] = useState<MeterRecord | null>(
+    null
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -625,16 +629,20 @@ export default function DashboardPage() {
                 collisionDetection={closestCenter}
                 onDragEnd={(event) => void handleDragEnd(event)}
               >
-                <table className="w-full table-fixed border-collapse bg-white font-sans">
+                <table className="w-full min-w-[1100px] table-fixed border-collapse bg-white font-sans">
                   <colgroup>
-                    <col className="w-[4%]" />
+                    <col className="w-[3%]" />
+                    <col className="w-[8%]" />
+                    <col className="w-[10%]" />
+                    <col className="w-[10%]" />
+                    <col className="w-[8%]" />
+                    <col className="w-[8%]" />
                     <col className="w-[9%]" />
                     <col className="w-[12%]" />
-                    <col className="w-[13%]" />
-                    <col className="w-[14%]" />
-                    <col className="w-[11%]" />
-                    <col className="w-[14%]" />
-                    <col className="w-[23%]" />
+                    <col className="w-[9%]" />
+                    <col className="w-[8%]" />
+                    <col className="w-[8%]" />
+                    <col className="w-[7%]" />
                   </colgroup>
                   <thead>
                     <tr>
@@ -646,6 +654,10 @@ export default function DashboardPage() {
                       <th className={headerClass}>Reader</th>
                       <th className={headerClass}>Remarks</th>
                       <th className={headerClass}>Address</th>
+                      <th className={headerClass}>Landmark</th>
+                      <th className={headerClass}>Latitude</th>
+                      <th className={headerClass}>Longitude</th>
+                      <th className={headerClass}>Image</th>
                     </tr>
                   </thead>
                   <SortableContext
@@ -656,7 +668,7 @@ export default function DashboardPage() {
                       {!loading && pageRows.length === 0 ? (
                         <tr>
                           <td
-                            colSpan={8}
+                            colSpan={12}
                             className="px-5 py-12 text-center text-sm text-[#6b7c89]"
                           >
                             No records found for this filter.
@@ -669,6 +681,7 @@ export default function DashboardPage() {
                             record={record}
                             headerClass={headerClass}
                             cellClass={cellClass}
+                            onViewImage={setImageViewRecord}
                             onHover={(event, hovered) => {
                               const area = tableAreaRef.current;
                               if (!area) return;
@@ -776,6 +789,14 @@ export default function DashboardPage() {
         }}
         initial={editing}
         onSubmit={handleSave}
+      />
+
+      <ImageViewDialog
+        open={!!imageViewRecord}
+        record={imageViewRecord}
+        onOpenChange={(open) => {
+          if (!open) setImageViewRecord(null);
+        }}
       />
 
       <ExportSignatoriesDialog

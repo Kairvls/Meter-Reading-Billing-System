@@ -18,6 +18,9 @@ type MeterRow = {
   remarks: string;
   contact_number: string;
   landmark: string;
+  latitude: string;
+  longitude: string;
+  image_url: string;
   date_received: string;
   sort_order: number;
   created_at: string;
@@ -52,6 +55,9 @@ function rowToRecord(row: MeterRow): MeterRecord {
     remarks: row.remarks,
     contactNumber: row.contact_number,
     landmark: row.landmark,
+    latitude: row.latitude ?? "",
+    longitude: row.longitude ?? "",
+    imageUrl: row.image_url ?? "",
     dateReceived: row.date_received,
     sortOrder: row.sort_order,
     createdAt: row.created_at,
@@ -86,12 +92,12 @@ export function replaceMeterRecordsCopy(records: MeterRecord[]) {
   const insert = db.prepare(`
     INSERT INTO meter_records (
       id, date, account_number, account_name, address, meter_number,
-      meter_reader, remarks, contact_number, landmark, date_received,
-      sort_order, created_at, updated_at
+      meter_reader, remarks, contact_number, landmark, latitude, longitude,
+      image_url, date_received, sort_order, created_at, updated_at
     ) VALUES (
       @id, @date, @accountNumber, @accountName, @address, @meterNumber,
-      @meterReader, @remarks, @contactNumber, @landmark, @dateReceived,
-      @sortOrder, @createdAt, @updatedAt
+      @meterReader, @remarks, @contactNumber, @landmark, @latitude, @longitude,
+      @imageUrl, @dateReceived, @sortOrder, @createdAt, @updatedAt
     )
   `);
 
@@ -109,12 +115,12 @@ export function upsertMeterRecordCopy(record: MeterRecord) {
   db.prepare(`
     INSERT INTO meter_records (
       id, date, account_number, account_name, address, meter_number,
-      meter_reader, remarks, contact_number, landmark, date_received,
-      sort_order, created_at, updated_at
+      meter_reader, remarks, contact_number, landmark, latitude, longitude,
+      image_url, date_received, sort_order, created_at, updated_at
     ) VALUES (
       @id, @date, @accountNumber, @accountName, @address, @meterNumber,
-      @meterReader, @remarks, @contactNumber, @landmark, @dateReceived,
-      @sortOrder, @createdAt, @updatedAt
+      @meterReader, @remarks, @contactNumber, @landmark, @latitude, @longitude,
+      @imageUrl, @dateReceived, @sortOrder, @createdAt, @updatedAt
     )
     ON CONFLICT(id) DO UPDATE SET
       date = excluded.date,
@@ -126,6 +132,9 @@ export function upsertMeterRecordCopy(record: MeterRecord) {
       remarks = excluded.remarks,
       contact_number = excluded.contact_number,
       landmark = excluded.landmark,
+      latitude = excluded.latitude,
+      longitude = excluded.longitude,
+      image_url = excluded.image_url,
       date_received = excluded.date_received,
       sort_order = excluded.sort_order,
       created_at = excluded.created_at,
@@ -184,12 +193,14 @@ export function replaceDeletedMeterRecordsCopy(records: DeletedMeterRecord[]) {
   const insert = db.prepare(`
     INSERT INTO deleted_meter_records (
       id, date, account_number, account_name, address, meter_number,
-      meter_reader, remarks, contact_number, landmark, date_received,
-      sort_order, created_at, updated_at, deleted_at, deleted_by
+      meter_reader, remarks, contact_number, landmark, latitude, longitude,
+      image_url, date_received, sort_order, created_at, updated_at,
+      deleted_at, deleted_by
     ) VALUES (
       @id, @date, @accountNumber, @accountName, @address, @meterNumber,
-      @meterReader, @remarks, @contactNumber, @landmark, @dateReceived,
-      @sortOrder, @createdAt, @updatedAt, @deletedAt, @deletedBy
+      @meterReader, @remarks, @contactNumber, @landmark, @latitude, @longitude,
+      @imageUrl, @dateReceived, @sortOrder, @createdAt, @updatedAt,
+      @deletedAt, @deletedBy
     )
   `);
 
@@ -207,12 +218,14 @@ export function upsertDeletedMeterRecordCopy(record: DeletedMeterRecord) {
   db.prepare(`
     INSERT INTO deleted_meter_records (
       id, date, account_number, account_name, address, meter_number,
-      meter_reader, remarks, contact_number, landmark, date_received,
-      sort_order, created_at, updated_at, deleted_at, deleted_by
+      meter_reader, remarks, contact_number, landmark, latitude, longitude,
+      image_url, date_received, sort_order, created_at, updated_at,
+      deleted_at, deleted_by
     ) VALUES (
       @id, @date, @accountNumber, @accountName, @address, @meterNumber,
-      @meterReader, @remarks, @contactNumber, @landmark, @dateReceived,
-      @sortOrder, @createdAt, @updatedAt, @deletedAt, @deletedBy
+      @meterReader, @remarks, @contactNumber, @landmark, @latitude, @longitude,
+      @imageUrl, @dateReceived, @sortOrder, @createdAt, @updatedAt,
+      @deletedAt, @deletedBy
     )
     ON CONFLICT(id) DO UPDATE SET
       date = excluded.date,
@@ -224,6 +237,9 @@ export function upsertDeletedMeterRecordCopy(record: DeletedMeterRecord) {
       remarks = excluded.remarks,
       contact_number = excluded.contact_number,
       landmark = excluded.landmark,
+      latitude = excluded.latitude,
+      longitude = excluded.longitude,
+      image_url = excluded.image_url,
       date_received = excluded.date_received,
       sort_order = excluded.sort_order,
       created_at = excluded.created_at,

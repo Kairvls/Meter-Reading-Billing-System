@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVerticalIcon } from "lucide-react";
+import { EyeIcon, GripVerticalIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { HoverTooltip } from "@/components/ui/hover-tooltip";
 import { TruncatedText } from "@/components/ui/truncated-text";
+import { formatCoordinate } from "@/lib/image-utils";
 import type { MeterRecord } from "@/lib/types";
 
 type Props = {
@@ -13,12 +15,14 @@ type Props = {
   headerClass: string;
   cellClass: string;
   onHover: (event: React.MouseEvent<HTMLTableRowElement>, record: MeterRecord) => void;
+  onViewImage: (record: MeterRecord) => void;
 };
 
 export function SortableRecordRow({
   record,
   cellClass,
   onHover,
+  onViewImage,
 }: Props) {
   const {
     attributes,
@@ -37,6 +41,9 @@ export function SortableRecordRow({
     position: "relative",
     zIndex: isDragging ? 20 : undefined,
   };
+
+  const latText = formatCoordinate(record.latitude ?? "", "lat") || "—";
+  const longText = formatCoordinate(record.longitude ?? "", "long") || "—";
 
   return (
     <tr
@@ -80,6 +87,31 @@ export function SortableRecordRow({
       </td>
       <td className={`${cellClass} overflow-hidden`}>
         <TruncatedText text={record.address} />
+      </td>
+      <td className={`${cellClass} overflow-hidden`}>
+        <TruncatedText text={record.landmark || "—"} />
+      </td>
+      <td className={`${cellClass} overflow-hidden`}>
+        <TruncatedText text={latText} />
+      </td>
+      <td className={`${cellClass} overflow-hidden`}>
+        <TruncatedText text={longText} />
+      </td>
+      <td className={`${cellClass} overflow-hidden`}>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="border-[#0099cc]/40 text-[#006699] hover:bg-[#e8f7fc]"
+          disabled={!record.imageUrl}
+          onClick={(e) => {
+            e.stopPropagation();
+            onViewImage(record);
+          }}
+        >
+          <EyeIcon />
+          View
+        </Button>
       </td>
     </tr>
   );

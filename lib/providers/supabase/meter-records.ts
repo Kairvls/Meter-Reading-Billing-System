@@ -45,6 +45,9 @@ type MeterRow = {
   remarks: string;
   contact_number: string | null;
   landmark: string | null;
+  latitude: string | null;
+  longitude: string | null;
+  image_url: string | null;
   date_received: string | null;
   sort_order: number;
   created_at: string;
@@ -68,6 +71,9 @@ function rowToRecord(row: MeterRow): MeterRecord {
     remarks: row.remarks,
     contactNumber: row.contact_number ?? "",
     landmark: row.landmark ?? "",
+    latitude: row.latitude ?? "",
+    longitude: row.longitude ?? "",
+    imageUrl: row.image_url ?? "",
     dateReceived: row.date_received ?? "",
     sortOrder: Number(row.sort_order ?? 0),
     createdAt: row.created_at,
@@ -95,6 +101,9 @@ function recordToRow(record: MeterRecord) {
     remarks: record.remarks,
     contact_number: record.contactNumber,
     landmark: record.landmark,
+    latitude: record.latitude,
+    longitude: record.longitude,
+    image_url: record.imageUrl,
     date_received: record.dateReceived,
     sort_order: record.sortOrder,
     created_at: record.createdAt,

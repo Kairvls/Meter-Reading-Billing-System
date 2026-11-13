@@ -13,6 +13,8 @@ const reportHeaders = [
   "Remarks:",
   "Contact Number",
   "Landmark:",
+  "Latitude",
+  "Longitude",
   "Date received",
 ] as const;
 
@@ -48,6 +50,8 @@ function reportRows(records: MeterRecord[]) {
     r.remarks,
     r.contactNumber || "None",
     r.landmark,
+    r.latitude || "",
+    r.longitude || "",
     r.dateReceived,
   ]);
 }
@@ -112,7 +116,7 @@ export async function exportRecordsToExcel(
     });
   });
 
-  const widths = [6, 12, 16, 22, 28, 16, 16, 22, 14, 28, 18];
+  const widths = [6, 12, 16, 20, 24, 14, 14, 18, 12, 18, 12, 12, 14];
   widths.forEach((width, index) => {
     sheet.getColumn(index + 1).width = width;
   });

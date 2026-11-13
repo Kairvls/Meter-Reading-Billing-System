@@ -11,6 +11,9 @@ create table if not exists public.meter_records (
   remarks text not null,
   contact_number text not null default '',
   landmark text not null default '',
+  latitude text not null default '',
+  longitude text not null default '',
+  image_url text not null default '',
   date_received text not null default '',
   sort_order integer not null default 0,
   created_at text not null,
@@ -28,6 +31,9 @@ create table if not exists public.deleted_meter_records (
   remarks text not null,
   contact_number text not null default '',
   landmark text not null default '',
+  latitude text not null default '',
+  longitude text not null default '',
+  image_url text not null default '',
   date_received text not null default '',
   sort_order integer not null default 0,
   created_at text not null,
@@ -69,3 +75,11 @@ alter table public.meter_records enable row level security;
 alter table public.deleted_meter_records enable row level security;
 alter table public.activity_logs enable row level security;
 alter table public.admin_settings enable row level security;
+
+-- If tables already exist, run these alters once:
+-- alter table public.meter_records add column if not exists latitude text not null default '';
+-- alter table public.meter_records add column if not exists longitude text not null default '';
+-- alter table public.meter_records add column if not exists image_url text not null default '';
+-- alter table public.deleted_meter_records add column if not exists latitude text not null default '';
+-- alter table public.deleted_meter_records add column if not exists longitude text not null default '';
+-- alter table public.deleted_meter_records add column if not exists image_url text not null default '';

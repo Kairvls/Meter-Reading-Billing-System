@@ -1,3 +1,4 @@
+import { formatAccountNumber } from "@/lib/account-number";
 import type { MeterRecordInput } from "@/lib/types";
 import { meterRecordSchema } from "@/lib/validators";
 
@@ -18,6 +19,9 @@ const HEADER_ALIASES: Record<FieldKey, string[]> = {
   remarks: ["remarks", "remark"],
   contactNumber: ["contact number", "contact no", "contact no.", "contact"],
   landmark: ["landmark"],
+  latitude: ["latitude", "lat"],
+  longitude: ["longitude", "long", "lng"],
+  imageUrl: ["image", "image url", "photo", "reference image"],
   dateReceived: ["date received", "datereceived", "received date"],
 };
 
@@ -204,7 +208,7 @@ export async function parseMeterRecordsFromExcel(
 
     const raw: MeterRecordInput = {
       date: parseDateValue(get("date")),
-      accountNumber: get("accountNumber"),
+      accountNumber: formatAccountNumber(get("accountNumber")),
       accountName: get("accountName"),
       address: get("address"),
       meterNumber: get("meterNumber"),
@@ -212,6 +216,9 @@ export async function parseMeterRecordsFromExcel(
       remarks: get("remarks"),
       contactNumber: get("contactNumber"),
       landmark: get("landmark"),
+      latitude: get("latitude").replace(/[^\d.\-]/g, ""),
+      longitude: get("longitude").replace(/[^\d.\-]/g, ""),
+      imageUrl: get("imageUrl"),
       dateReceived: parseDateValue(get("dateReceived")) || get("dateReceived"),
     };
 

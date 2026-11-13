@@ -1,8 +1,12 @@
 import { z } from "zod";
+import { ACCOUNT_NUMBER_PATTERN } from "@/lib/account-number";
 
 export const meterRecordSchema = z.object({
   date: z.string().min(1, "Date is required"),
-  accountNumber: z.string().min(1, "Account number is required"),
+  accountNumber: z
+    .string()
+    .min(1, "Account number is required")
+    .regex(ACCOUNT_NUMBER_PATTERN, "Account number must be 00-0000-0000"),
   accountName: z.string().min(1, "Account name is required"),
   address: z.string().min(1, "Address is required"),
   meterNumber: z.string().min(1, "Meter number is required"),
@@ -10,6 +14,9 @@ export const meterRecordSchema = z.object({
   remarks: z.string().min(1, "Remarks is required"),
   contactNumber: z.string().optional().default(""),
   landmark: z.string().optional().default(""),
+  latitude: z.string().optional().default(""),
+  longitude: z.string().optional().default(""),
+  imageUrl: z.string().optional().default(""),
   dateReceived: z.string().optional().default(""),
 });
 
