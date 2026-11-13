@@ -22,9 +22,13 @@ import {
 import { fileToCompressedDataUrl } from "@/lib/image-utils";
 import type { MeterRecord, MeterRecordInput } from "@/lib/types";
 
-function createEmptyForm(): MeterRecordInput {
+function todayIsoDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function createEmptyForm(date = ""): MeterRecordInput {
   return {
-    date: new Date().toISOString().slice(0, 10),
+    date,
     accountNumber: "",
     accountName: "",
     address: "",
@@ -78,7 +82,7 @@ export function RecordFormDialog({
         dateReceived: initial.dateReceived,
       });
     } else {
-      setForm(createEmptyForm());
+      setForm(createEmptyForm(todayIsoDate()));
     }
   }, [open, initial]);
 

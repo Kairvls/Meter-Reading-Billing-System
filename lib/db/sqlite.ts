@@ -9,11 +9,21 @@ const globalForSqlite = globalThis as unknown as {
 function resolveDbPath() {
   const configured = process.env.OFFLINE_DB_PATH?.trim();
   if (configured) {
-    return path.isAbsolute(configured)
-      ? configured
-      : path.join(process.cwd(), configured);
+    if (path.isAbsolute(configured)) return configured;
+    // Keep path statically scoped so Turbopack does not trace the whole repo.
+    return path.join(/*turbopackIgnore: true*/ process.cwd(), configured);
   }
-  return path.join(process.cwd(), "data", "offline-copy.sqlite");
+
+  // Vercel serverless: only /tmp is writable.
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    return "/tmp/meter-offline-copy.sqlite";
+  }
+
+  return path.join(
+    /*turbopackIgnore: true*/ process.cwd(),
+    "data",
+    "offline-copy.sqlite"
+  );
 }
 
 function ensureColumn(
