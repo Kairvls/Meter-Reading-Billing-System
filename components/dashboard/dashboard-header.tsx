@@ -7,9 +7,11 @@ import {
   BarChart3Icon,
   LayoutDashboardIcon,
   LogOutIcon,
+  MapPinnedIcon,
   ScrollTextIcon,
   Trash2Icon,
   UserRoundIcon,
+  UsersIcon,
   type LucideIcon,
 } from "lucide-react";
 import { ProfileDialog } from "@/components/dashboard/profile-dialog";
@@ -53,6 +55,18 @@ const navItems: {
     label: "Deleted Data",
     match: "prefix",
     icon: Trash2Icon,
+  },
+  {
+    href: "/dashboard/meter-readers",
+    label: "Meter Readers",
+    match: "prefix",
+    icon: UsersIcon,
+  },
+  {
+    href: "/dashboard/addresses",
+    label: "Addresses",
+    match: "prefix",
+    icon: MapPinnedIcon,
   },
 ];
 

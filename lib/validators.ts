@@ -11,6 +11,7 @@ export const meterRecordSchema = z.object({
   address: z.string().min(1, "Address is required"),
   meterNumber: z.string().min(1, "Meter number is required"),
   meterReader: z.string().min(1, "Meter reader is required"),
+  sepMeterReader: z.string().optional().default(""),
   remarks: z.string().min(1, "Remarks is required"),
   contactNumber: z.string().optional().default(""),
   landmark: z.string().optional().default(""),

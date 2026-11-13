@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ImageIcon, LandmarkIcon, MapPinIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -14,12 +14,19 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SearchableAddSelect } from "@/components/ui/searchable-add-select";
 import {
   ACCOUNT_NUMBER_MAX_LENGTH,
   formatAccountNumber,
   isValidAccountNumber,
 } from "@/lib/account-number";
+import {
+  formatAccountName,
+  parseAccountName,
+  type AccountNameParts,
+} from "@/lib/account-name";
 import { fileToCompressedDataUrl } from "@/lib/image-utils";
+import type { LookupKind } from "@/lib/lookups";
 import type { MeterRecord, MeterRecordInput } from "@/lib/types";
 
 function todayIsoDate() {
@@ -34,6 +41,7 @@ function createEmptyForm(date = ""): MeterRecordInput {
     address: "",
     meterNumber: "",
     meterReader: "",
+    sepMeterReader: "",
     remarks: "",
     contactNumber: "",
     landmark: "",
@@ -58,13 +66,43 @@ export function RecordFormDialog({
   onSubmit,
 }: Props) {
   const [form, setForm] = useState<MeterRecordInput>(createEmptyForm);
+  const [nameParts, setNameParts] = useState<AccountNameParts>({
+    lastName: "",
+    firstName: "",
+    middleName: "",
+  });
   const [saving, setSaving] = useState(false);
   const [compressing, setCompressing] = useState(false);
+  const [readers, setReaders] = useState<string[]>([]);
+  const [sepReaders, setSepReaders] = useState<string[]>([]);
+  const [addresses, setAddresses] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const isEdit = Boolean(initial);
 
+  const loadLookups = useCallback(async () => {
+    async function loadKind(kind: LookupKind) {
+      const res = await fetch(`/api/lookups?kind=${kind}`);
+      const data = await res.json();
+      if (!res.ok || !data.ok) return [] as string[];
+      return (data.items as Array<{ name: string }>).map((item) => item.name);
+    }
+    try {
+      const [readerNames, sepNames, addressNames] = await Promise.all([
+        loadKind("meter_reader"),
+        loadKind("sep_meter_reader"),
+        loadKind("address"),
+      ]);
+      setReaders(readerNames);
+      setSepReaders(sepNames);
+      setAddresses(addressNames);
+    } catch {
+      // keep empty lists; user can still add from dropdown
+    }
+  }, []);
+
   useEffect(() => {
     if (!open) return;
+    void loadLookups();
     if (initial) {
       setForm({
         date: initial.date,
@@ -73,24 +111,51 @@ export function RecordFormDialog({
         address: initial.address,
         meterNumber: initial.meterNumber,
         meterReader: initial.meterReader,
+        sepMeterReader: initial.sepMeterReader ?? "",
         remarks: initial.remarks,
         contactNumber: initial.contactNumber,
         landmark: initial.landmark,
         latitude: initial.latitude ?? "",
         longitude: initial.longitude ?? "",
         imageUrl: initial.imageUrl ?? "",
-        dateReceived: initial.dateReceived,
+        dateReceived: initial.dateReceived || "",
       });
+      setNameParts(parseAccountName(initial.accountName));
     } else {
       setForm(createEmptyForm(todayIsoDate()));
+      setNameParts({ lastName: "", firstName: "", middleName: "" });
     }
-  }, [open, initial]);
+  }, [open, initial, loadLookups]);
 
   function update<K extends keyof MeterRecordInput>(
     key: K,
     value: MeterRecordInput[K]
   ) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function updateNamePart<K extends keyof AccountNameParts>(
+    key: K,
+    value: string
+  ) {
+    setNameParts((prev) => {
+      const next = { ...prev, [key]: value };
+      update("accountName", formatAccountName(next));
+      return next;
+    });
+  }
+
+  async function addLookup(kind: LookupKind, name: string) {
+    const res = await fetch("/api/lookups", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind, name }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || "Failed to add item");
+    }
+    await loadLookups();
   }
 
   async function handleImageChange(file: File | undefined) {
@@ -114,11 +179,16 @@ export function RecordFormDialog({
       toast.error("Account number must be 00-0000-0000");
       return;
     }
+    if (!nameParts.lastName.trim() || !nameParts.firstName.trim()) {
+      toast.error("Last name and first name are required");
+      return;
+    }
     setSaving(true);
     try {
       await onSubmit({
         ...form,
         accountNumber: formatAccountNumber(form.accountNumber),
+        accountName: formatAccountName(nameParts),
       });
       onOpenChange(false);
     } finally {
@@ -128,7 +198,10 @@ export function RecordFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl" showCloseButton>
+      <DialogContent
+        className="max-h-[90vh] overflow-y-auto sm:max-w-2xl"
+        showCloseButton
+      >
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit record" : "Create record"}</DialogTitle>
           <DialogDescription>
@@ -161,12 +234,28 @@ export function RecordFormDialog({
             />
             <p className="text-xs text-[#6b7c89]">Format: 00-0000-0000</p>
           </Field>
-          <Field label="Account name" htmlFor="accountName">
+
+          <Field label="Last name" htmlFor="lastName">
             <Input
-              id="accountName"
-              value={form.accountName}
-              onChange={(e) => update("accountName", e.target.value)}
+              id="lastName"
+              value={nameParts.lastName}
+              onChange={(e) => updateNamePart("lastName", e.target.value)}
               required
+            />
+          </Field>
+          <Field label="First name" htmlFor="firstName">
+            <Input
+              id="firstName"
+              value={nameParts.firstName}
+              onChange={(e) => updateNamePart("firstName", e.target.value)}
+              required
+            />
+          </Field>
+          <Field label="Middle name" htmlFor="middleName">
+            <Input
+              id="middleName"
+              value={nameParts.middleName}
+              onChange={(e) => updateNamePart("middleName", e.target.value)}
             />
           </Field>
           <Field label="Meter number" htmlFor="meterNumber">
@@ -177,14 +266,35 @@ export function RecordFormDialog({
               required
             />
           </Field>
-          <Field label="Meter reader" htmlFor="meterReader">
-            <Input
+
+          <div className="space-y-2">
+            <Label htmlFor="meterReader">Meter reader</Label>
+            <SearchableAddSelect
               id="meterReader"
               value={form.meterReader}
-              onChange={(e) => update("meterReader", e.target.value)}
+              options={readers}
+              placeholder="Select meter reader"
               required
+              onChange={(value) => update("meterReader", value)}
+              onAddOption={async (name) => {
+                await addLookup("meter_reader", name);
+              }}
             />
-          </Field>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="sepMeterReader">SEP meter reader</Label>
+            <SearchableAddSelect
+              id="sepMeterReader"
+              value={form.sepMeterReader}
+              options={sepReaders}
+              placeholder="Select SEP meter reader"
+              onChange={(value) => update("sepMeterReader", value)}
+              onAddOption={async (name) => {
+                await addLookup("sep_meter_reader", name);
+              }}
+            />
+          </div>
+
           <Field label="Remarks" htmlFor="remarks">
             <Input
               id="remarks"
@@ -203,21 +313,29 @@ export function RecordFormDialog({
           <Field label="Date received" htmlFor="dateReceived">
             <Input
               id="dateReceived"
+              type="date"
               value={form.dateReceived}
               onChange={(e) => update("dateReceived", e.target.value)}
             />
           </Field>
+
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="address">Address</Label>
             <div className="relative">
-              <MapPinIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#0099cc]" />
-              <Input
-                id="address"
-                className="pl-9"
-                value={form.address}
-                onChange={(e) => update("address", e.target.value)}
-                required
-              />
+              <MapPinIcon className="pointer-events-none absolute top-3 left-3 z-10 size-4 text-[#0099cc]" />
+              <div className="pl-9">
+                <SearchableAddSelect
+                  id="address"
+                  value={form.address}
+                  options={addresses}
+                  placeholder="Select address"
+                  required
+                  onChange={(value) => update("address", value)}
+                  onAddOption={async (name) => {
+                    await addLookup("address", name);
+                  }}
+                />
+              </div>
             </div>
           </div>
           <div className="space-y-2 sm:col-span-2">

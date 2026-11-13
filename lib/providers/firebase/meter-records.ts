@@ -44,6 +44,7 @@ function toRecord(id: string, data: DocumentData): MeterRecord {
     address: String(data.address ?? ""),
     meterNumber: String(data.meterNumber ?? ""),
     meterReader: String(data.meterReader ?? ""),
+    sepMeterReader: String(data.sepMeterReader ?? ""),
     remarks: String(data.remarks ?? ""),
     contactNumber: String(data.contactNumber ?? ""),
     landmark: String(data.landmark ?? ""),

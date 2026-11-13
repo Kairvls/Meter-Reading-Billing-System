@@ -3,17 +3,18 @@ export type PeriodFilter = "daily" | "weekly" | "monthly" | "annual" | "all";
 export type MeterRecordInput = {
   date: string; // YYYY-MM-DD
   accountNumber: string; // 00-0000-0000
-  accountName: string;
+  accountName: string; // Last, First, Middle
   address: string;
   meterNumber: string;
   meterReader: string;
+  sepMeterReader: string;
   remarks: string;
   contactNumber: string;
   landmark: string;
   latitude: string;
   longitude: string;
   imageUrl: string; // compressed data URL or remote URL
-  dateReceived: string;
+  dateReceived: string; // YYYY-MM-DD
 };
 
 export type MeterRecord = MeterRecordInput & {

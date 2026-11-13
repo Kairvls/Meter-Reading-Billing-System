@@ -8,6 +8,7 @@ create table if not exists public.meter_records (
   address text not null,
   meter_number text not null,
   meter_reader text not null,
+  sep_meter_reader text not null default '',
   remarks text not null,
   contact_number text not null default '',
   landmark text not null default '',
@@ -28,6 +29,7 @@ create table if not exists public.deleted_meter_records (
   address text not null,
   meter_number text not null,
   meter_reader text not null,
+  sep_meter_reader text not null default '',
   remarks text not null,
   contact_number text not null default '',
   landmark text not null default '',
@@ -41,6 +43,16 @@ create table if not exists public.deleted_meter_records (
   deleted_at text not null,
   deleted_by text not null
 );
+
+create table if not exists public.lookup_values (
+  id text primary key,
+  kind text not null,
+  name text not null,
+  created_at text not null
+);
+
+create index if not exists idx_lookup_values_kind_name
+  on public.lookup_values (kind, name);
 
 create table if not exists public.activity_logs (
   id text primary key,
@@ -80,6 +92,14 @@ alter table public.admin_settings enable row level security;
 -- alter table public.meter_records add column if not exists latitude text not null default '';
 -- alter table public.meter_records add column if not exists longitude text not null default '';
 -- alter table public.meter_records add column if not exists image_url text not null default '';
+-- alter table public.meter_records add column if not exists sep_meter_reader text not null default '';
 -- alter table public.deleted_meter_records add column if not exists latitude text not null default '';
 -- alter table public.deleted_meter_records add column if not exists longitude text not null default '';
 -- alter table public.deleted_meter_records add column if not exists image_url text not null default '';
+-- alter table public.deleted_meter_records add column if not exists sep_meter_reader text not null default '';
+-- create table if not exists public.lookup_values (
+--   id text primary key,
+--   kind text not null,
+--   name text not null,
+--   created_at text not null
+-- );

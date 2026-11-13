@@ -10,6 +10,7 @@ const reportHeaders = [
   "Address",
   "Meter Number:",
   "Meter Reader :",
+  "SEP Meter Reader:",
   "Remarks:",
   "Contact Number",
   "Landmark:",
@@ -47,6 +48,7 @@ function reportRows(records: MeterRecord[]) {
     r.address,
     r.meterNumber,
     r.meterReader,
+    r.sepMeterReader || "",
     r.remarks,
     r.contactNumber || "None",
     r.landmark,
@@ -116,7 +118,7 @@ export async function exportRecordsToExcel(
     });
   });
 
-  const widths = [6, 12, 16, 20, 24, 14, 14, 18, 12, 18, 12, 12, 14];
+  const widths = [6, 12, 16, 20, 24, 14, 14, 16, 18, 12, 18, 12, 12, 14];
   widths.forEach((width, index) => {
     sheet.getColumn(index + 1).width = width;
   });

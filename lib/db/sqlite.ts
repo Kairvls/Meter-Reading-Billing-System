@@ -49,6 +49,7 @@ function migrate(db: Database.Database) {
       address TEXT NOT NULL,
       meter_number TEXT NOT NULL,
       meter_reader TEXT NOT NULL,
+      sep_meter_reader TEXT NOT NULL DEFAULT '',
       remarks TEXT NOT NULL,
       contact_number TEXT NOT NULL DEFAULT '',
       landmark TEXT NOT NULL DEFAULT '',
@@ -69,6 +70,7 @@ function migrate(db: Database.Database) {
       address TEXT NOT NULL,
       meter_number TEXT NOT NULL,
       meter_reader TEXT NOT NULL,
+      sep_meter_reader TEXT NOT NULL DEFAULT '',
       remarks TEXT NOT NULL,
       contact_number TEXT NOT NULL DEFAULT '',
       landmark TEXT NOT NULL DEFAULT '',
@@ -81,6 +83,13 @@ function migrate(db: Database.Database) {
       updated_at TEXT NOT NULL,
       deleted_at TEXT NOT NULL,
       deleted_by TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS lookup_values (
+      id TEXT PRIMARY KEY,
+      kind TEXT NOT NULL,
+      name TEXT NOT NULL,
+      created_at TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS activity_logs (
@@ -106,6 +115,7 @@ function migrate(db: Database.Database) {
     ensureColumn(db, table, "latitude", "TEXT NOT NULL DEFAULT ''");
     ensureColumn(db, table, "longitude", "TEXT NOT NULL DEFAULT ''");
     ensureColumn(db, table, "image_url", "TEXT NOT NULL DEFAULT ''");
+    ensureColumn(db, table, "sep_meter_reader", "TEXT NOT NULL DEFAULT ''");
   }
 }
 
