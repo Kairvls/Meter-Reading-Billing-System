@@ -21,12 +21,14 @@ import {
   ChevronRightIcon,
   FileDownIcon,
   FileSpreadsheetIcon,
+  FileUpIcon,
   PencilIcon,
   PlusIcon,
   PrinterIcon,
   Trash2Icon,
   XIcon,
 } from "lucide-react";
+import { ExportSignatoriesDialog } from "@/components/dashboard/export-signatories-dialog";
 import { RecordFormDialog } from "@/components/dashboard/record-form-dialog";
 import { SortableRecordRow } from "@/components/dashboard/sortable-record-row";
 import { Button } from "@/components/ui/button";
@@ -43,6 +45,8 @@ import {
   exportRecordsToPdf,
   printRecords,
 } from "@/lib/export-records";
+import type { ExportSignatories } from "@/lib/export-signatories";
+import { parseMeterRecordsFromExcel } from "@/lib/import-records";
 import type { MeterRecord, MeterRecordInput, PeriodFilter } from "@/lib/types";
 
 const headerClass =
@@ -99,6 +103,11 @@ export default function DashboardPage() {
   const [deleteTarget, setDeleteTarget] = useState<MeterRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [savingOrder, setSavingOrder] = useState(false);
+  const [exportKind, setExportKind] = useState<"pdf" | "excel" | "print" | null>(
+    null
+  );
+  const [importing, setImporting] = useState(false);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -206,7 +215,14 @@ export default function DashboardPage() {
       if (!res.ok || !data.ok) {
         throw new Error(data.error || "Save failed");
       }
-      toast.success(editing ? "Record updated" : "Record created");
+      if (data.offline) {
+        toast.warning(
+          data.warning ||
+            "Saved to offline copy only. Sync when Firebase is available."
+        );
+      } else {
+        toast.success(editing ? "Record updated" : "Record created");
+      }
       setEditing(null);
       await loadRecords();
     } catch (error) {
@@ -272,7 +288,14 @@ export default function DashboardPage() {
       if (!res.ok || !data.ok) {
         throw new Error(data.error || "Delete failed");
       }
-      toast.success("Record deleted");
+      if (data.offline) {
+        toast.warning(
+          data.warning ||
+            "Saved to offline copy only. Sync when Firebase is available."
+        );
+      } else {
+        toast.success("Record deleted");
+      }
       setDeleteTarget(null);
       setHoveredRow(null);
       await loadRecords();
@@ -283,8 +306,70 @@ export default function DashboardPage() {
     }
   }
 
+  function openExportDialog(type: "pdf" | "excel" | "print") {
+    if (filtered.length === 0) {
+      toast.error("No records to export");
+      return;
+    }
+    setExportKind(type);
+  }
+
+  async function handleImportExcel(file: File) {
+    if (!file.name.toLowerCase().endsWith(".xlsx")) {
+      toast.error("Please upload an .xlsx Excel file");
+      return;
+    }
+    setImporting(true);
+    try {
+      const buffer = await file.arrayBuffer();
+      const parsed = await parseMeterRecordsFromExcel(buffer);
+      if (parsed.records.length === 0) {
+        toast.error(
+          parsed.errors[0] ||
+            "No valid rows found. Check that columns match the table headers."
+        );
+        return;
+      }
+
+      const res = await fetch("/api/meter-records/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ records: parsed.records }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Import failed");
+      }
+
+      const count = Number(data.count || parsed.records.length);
+      if (data.offline) {
+        toast.warning(
+          data.warning ||
+            `Imported ${count} record${count === 1 ? "" : "s"} to offline copy only.`
+        );
+      } else {
+        toast.success(
+          `Imported ${count} record${count === 1 ? "" : "s"} from Excel`
+        );
+      }
+      if (parsed.errors.length > 0) {
+        toast.message(
+          `${parsed.errors.length} row${parsed.errors.length === 1 ? "" : "s"} skipped`,
+          { description: parsed.errors.slice(0, 3).join(" · ") }
+        );
+      }
+      await loadRecords();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Import failed");
+    } finally {
+      setImporting(false);
+      if (importInputRef.current) importInputRef.current.value = "";
+    }
+  }
+
   async function handleExport(
-    type: "pdf" | "excel" | "print"
+    type: "pdf" | "excel" | "print",
+    signatories: ExportSignatories
   ) {
     if (filtered.length === 0) {
       toast.error("No records to export");
@@ -292,13 +377,13 @@ export default function DashboardPage() {
     }
     try {
       if (type === "pdf") {
-        await exportRecordsToPdf(filtered);
+        await exportRecordsToPdf(filtered, signatories);
         toast.success("PDF downloaded");
       } else if (type === "excel") {
-        await exportRecordsToExcel(filtered);
+        await exportRecordsToExcel(filtered, signatories);
         toast.success("Excel downloaded");
       } else {
-        printRecords(filtered);
+        printRecords(filtered, signatories);
         toast.success("Opening print dialog");
       }
       void fetch("/api/activity-logs", {
@@ -477,12 +562,33 @@ export default function DashboardPage() {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
+                <input
+                  ref={importInputRef}
+                  type="file"
+                  accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) void handleImportExcel(file);
+                  }}
+                />
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
                   className="border-[#0099cc]/40 text-[#006699] hover:bg-[#e8f7fc]"
-                  onClick={() => void handleExport("pdf")}
+                  onClick={() => importInputRef.current?.click()}
+                  disabled={loading || importing}
+                >
+                  <FileUpIcon />
+                  {importing ? "Importing..." : "Upload Excel"}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="border-[#0099cc]/40 text-[#006699] hover:bg-[#e8f7fc]"
+                  onClick={() => openExportDialog("pdf")}
                   disabled={loading || filtered.length === 0}
                 >
                   <FileDownIcon />
@@ -493,7 +599,7 @@ export default function DashboardPage() {
                   size="sm"
                   variant="outline"
                   className="border-[#0099cc]/40 text-[#006699] hover:bg-[#e8f7fc]"
-                  onClick={() => void handleExport("print")}
+                  onClick={() => openExportDialog("print")}
                   disabled={loading || filtered.length === 0}
                 >
                   <PrinterIcon />
@@ -504,7 +610,7 @@ export default function DashboardPage() {
                   size="sm"
                   variant="outline"
                   className="border-[#0099cc]/40 text-[#006699] hover:bg-[#e8f7fc]"
-                  onClick={() => void handleExport("excel")}
+                  onClick={() => openExportDialog("excel")}
                   disabled={loading || filtered.length === 0}
                 >
                   <FileSpreadsheetIcon />
@@ -670,6 +776,17 @@ export default function DashboardPage() {
         }}
         initial={editing}
         onSubmit={handleSave}
+      />
+
+      <ExportSignatoriesDialog
+        open={!!exportKind}
+        kind={exportKind}
+        onOpenChange={(open) => {
+          if (!open) setExportKind(null);
+        }}
+        onConfirm={(signatories, kind) => {
+          void handleExport(kind, signatories);
+        }}
       />
 
       <Dialog

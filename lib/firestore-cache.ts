@@ -37,6 +37,36 @@ export function isQuotaError(error: unknown) {
   );
 }
 
+export function isFirebaseUnavailable(error: unknown) {
+  return isCloudUnavailable(error);
+}
+
+export function isCloudUnavailable(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  const lower = message.toLowerCase();
+  return (
+    isQuotaError(error) ||
+    lower.includes("unavailable") ||
+    lower.includes("deadline exceeded") ||
+    lower.includes("econnreset") ||
+    lower.includes("enotfound") ||
+    lower.includes("network") ||
+    lower.includes("fetch failed") ||
+    lower.includes("firestore request failed") ||
+    lower.includes("supabase") ||
+    lower.includes("failed to fetch") ||
+    lower.includes("connect")
+  );
+}
+
 export function quotaErrorMessage() {
   return "Firebase quota exceeded. Wait for the daily free-tier reset, or enable Blaze billing in Firebase Console. Reads are now cached briefly to reduce usage.";
+}
+
+export function offlineCopyMessage() {
+  return "Saved to offline copy only. Sync when Firebase is available.";
+}
+
+export function offlineReadMessage() {
+  return "Showing offline SQLite copy (Firebase unavailable).";
 }

@@ -81,7 +81,14 @@ export function DeletedDashboard() {
       if (!res.ok || !data.ok) {
         throw new Error(data.error || "Restore failed");
       }
-      toast.success("Record restored");
+      if (data.offline) {
+        toast.warning(
+          data.warning ||
+            "Saved to offline copy only. Sync when Firebase is available."
+        );
+      } else {
+        toast.success("Record restored");
+      }
       setRecords((prev) => prev.filter((item) => item.id !== record.id));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Restore failed");
@@ -101,7 +108,14 @@ export function DeletedDashboard() {
       if (!res.ok || !data.ok) {
         throw new Error(data.error || "Permanent delete failed");
       }
-      toast.success("Record permanently deleted");
+      if (data.offline) {
+        toast.warning(
+          data.warning ||
+            "Saved to offline copy only. Sync when Firebase is available."
+        );
+      } else {
+        toast.success("Record permanently deleted");
+      }
       setRecords((prev) => prev.filter((item) => item.id !== purgeTarget.id));
       setPurgeTarget(null);
     } catch (error) {

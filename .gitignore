@@ -37,6 +37,10 @@ yarn-error.log*
 # local databases / secrets
 *.db
 *.db-journal
+*.sqlite
+*.sqlite-journal
+/data/*
+!/data/.gitkeep
 *-firebase-adminsdk-*.json
 serviceAccountKey.json
 

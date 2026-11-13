@@ -39,3 +39,5 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 # Meter-Reading-Billing-System
 this project is for controlling system purposes only
 >>>>>>> c67ff138b12c4f53da2e6dfcc4ba980425280c3c
+
+make also here that you can upload your excel files and it will add up into table if the data from the excel is correct and base on the table header column

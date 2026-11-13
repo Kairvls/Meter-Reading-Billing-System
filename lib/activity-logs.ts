@@ -1,25 +1,23 @@
-import type { DocumentData } from "firebase-admin/firestore";
-import { collections, getAdminFirestore } from "@/lib/firebase";
-import {
-  getCached,
-  invalidateCache,
-  isQuotaError,
-  quotaErrorMessage,
-  setCached,
-} from "@/lib/firestore-cache";
+import { getDatabaseProvider } from "@/lib/db/provider";
 import type { ActivityAction, ActivityLog } from "@/lib/types";
 
-function toLog(id: string, data: DocumentData): ActivityLog {
-  return {
-    id,
-    action: (data.action as ActivityAction) || "update",
-    actor: String(data.actor ?? "admin"),
-    message: String(data.message ?? ""),
-    recordId: data.recordId ? String(data.recordId) : undefined,
-    accountNumber: data.accountNumber ? String(data.accountNumber) : undefined,
-    accountName: data.accountName ? String(data.accountName) : undefined,
-    createdAt: String(data.createdAt ?? ""),
-  };
+type ActivityLogsApi = {
+  writeActivityLog: (input: {
+    action: ActivityAction;
+    actor: string;
+    message: string;
+    recordId?: string;
+    accountNumber?: string;
+    accountName?: string;
+  }) => Promise<void>;
+  listActivityLogs: (limit?: number) => Promise<ActivityLog[]>;
+};
+
+async function api(): Promise<ActivityLogsApi> {
+  if (getDatabaseProvider() === "supabase") {
+    return import("@/lib/providers/supabase/activity-logs");
+  }
+  return import("@/lib/providers/firebase/activity-logs");
 }
 
 export async function writeActivityLog(input: {
@@ -30,57 +28,9 @@ export async function writeActivityLog(input: {
   accountNumber?: string;
   accountName?: string;
 }) {
-  try {
-    const db = getAdminFirestore();
-    const payload = {
-      ...input,
-      createdAt: new Date().toISOString(),
-    };
-    await db.collection(collections.activityLogs).add(payload);
-    invalidateCache("activityLogs");
-  } catch (error) {
-    // Never fail the main action because logging hit quota.
-    if (isQuotaError(error)) return;
-    console.error("Failed to write activity log", error);
-  }
+  return (await api()).writeActivityLog(input);
 }
 
 export async function listActivityLogs(limit = 100) {
-  const cacheKey = `activityLogs:${limit}`;
-  try {
-    const cached = getCached<ActivityLog[]>(cacheKey);
-    if (cached) return cached;
-
-    const db = getAdminFirestore();
-    let docs: { id: string; data: DocumentData }[] = [];
-
-    try {
-      const snap = await db
-        .collection(collections.activityLogs)
-        .orderBy("createdAt", "desc")
-        .limit(limit)
-        .get();
-      docs = snap.docs.map((doc) => ({ id: doc.id, data: doc.data() }));
-    } catch {
-      const snap = await db
-        .collection(collections.activityLogs)
-        .limit(limit)
-        .get();
-      docs = snap.docs.map((doc) => ({ id: doc.id, data: doc.data() }));
-      docs.sort((a, b) =>
-        String(b.data.createdAt ?? "").localeCompare(
-          String(a.data.createdAt ?? "")
-        )
-      );
-    }
-
-    const logs = docs.map((doc) => toLog(doc.id, doc.data));
-    setCached(cacheKey, logs, 45_000);
-    return logs;
-  } catch (error) {
-    if (isQuotaError(error)) {
-      throw new Error(quotaErrorMessage());
-    }
-    throw error instanceof Error ? error : new Error("Failed to load logs");
-  }
+  return (await api()).listActivityLogs(limit);
 }

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import {
   ArrowDownUpIcon,
   FileDownIcon,
+  FileUpIcon,
   PencilIcon,
   PlusIcon,
   RotateCcwIcon,
@@ -45,6 +46,11 @@ const ACTION_META: Record<
     label: "Exported",
     className: "bg-[#e8f7fc] text-[#006699]",
     icon: FileDownIcon,
+  },
+  import: {
+    label: "Imported",
+    className: "bg-[#e8f7fc] text-[#006699]",
+    icon: FileUpIcon,
   },
   purge: {
     label: "Purged",

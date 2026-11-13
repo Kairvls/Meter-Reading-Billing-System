@@ -11,6 +11,15 @@ export type MonthBucket = {
   count: number;
 };
 
+export type TrendPoint = {
+  key: string;
+  label: string;
+  records: number;
+  accounts: number;
+};
+
+export type TrendPeriod = "daily" | "weekly" | "monthly";
+
 export type AnalyticsSummary = {
   total: number;
   today: number;
@@ -22,6 +31,7 @@ export type AnalyticsSummary = {
   byReader: NamedCount[];
   byMonth: MonthBucket[];
   byArea: NamedCount[];
+  trends: Record<TrendPeriod, TrendPoint[]>;
 };
 
 export const EMPTY_ANALYTICS: AnalyticsSummary = {
@@ -35,6 +45,7 @@ export const EMPTY_ANALYTICS: AnalyticsSummary = {
   byReader: [],
   byMonth: [],
   byArea: [],
+  trends: { daily: [], weekly: [], monthly: [] },
 };
 
 function startOfDay(date: Date) {
@@ -73,6 +84,116 @@ function toSortedCounts(map: Map<string, number>, limit = 8): NamedCount[] {
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
     .slice(0, limit);
+}
+
+function startOfWeek(date: Date) {
+  const d = startOfDay(date);
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day; // Monday start
+  d.setDate(d.getDate() + diff);
+  return d;
+}
+
+function buildTrendBuckets(
+  records: MeterRecord[],
+  now: Date
+): Record<TrendPeriod, TrendPoint[]> {
+  const dayFmt = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+  const weekFmt = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+  const monthFmt = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    year: "2-digit",
+  });
+
+  const dailyKeys: string[] = [];
+  const weeklyKeys: string[] = [];
+  const monthlyKeys: string[] = [];
+  const dailyLabel = new Map<string, string>();
+  const weeklyLabel = new Map<string, string>();
+  const monthlyLabel = new Map<string, string>();
+
+  for (let i = 13; i >= 0; i -= 1) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    const key = toDateKey(d);
+    dailyKeys.push(key);
+    dailyLabel.set(key, dayFmt.format(d));
+  }
+
+  for (let i = 7; i >= 0; i -= 1) {
+    const weekStart = startOfWeek(now);
+    weekStart.setDate(weekStart.getDate() - i * 7);
+    const key = toDateKey(weekStart);
+    weeklyKeys.push(key);
+    weeklyLabel.set(key, weekFmt.format(weekStart));
+  }
+
+  for (let i = 11; i >= 0; i -= 1) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    monthlyKeys.push(key);
+    monthlyLabel.set(key, monthFmt.format(d));
+  }
+
+  const dailyRecords = new Map(dailyKeys.map((k) => [k, 0]));
+  const weeklyRecords = new Map(weeklyKeys.map((k) => [k, 0]));
+  const monthlyRecords = new Map(monthlyKeys.map((k) => [k, 0]));
+  const dailyAccounts = new Map(dailyKeys.map((k) => [k, new Set<string>()]));
+  const weeklyAccounts = new Map(weeklyKeys.map((k) => [k, new Set<string>()]));
+  const monthlyAccounts = new Map(
+    monthlyKeys.map((k) => [k, new Set<string>()])
+  );
+
+  for (const record of records) {
+    const recordDate = parseRecordDate(record.date);
+    if (!recordDate) continue;
+    const account = record.accountNumber.trim() || record.id;
+    const dayKey = toDateKey(recordDate);
+    const weekKey = toDateKey(startOfWeek(recordDate));
+    const monthKey = dayKey.slice(0, 7);
+
+    if (dailyRecords.has(dayKey)) {
+      dailyRecords.set(dayKey, (dailyRecords.get(dayKey) || 0) + 1);
+      dailyAccounts.get(dayKey)?.add(account);
+    }
+    if (weeklyRecords.has(weekKey)) {
+      weeklyRecords.set(weekKey, (weeklyRecords.get(weekKey) || 0) + 1);
+      weeklyAccounts.get(weekKey)?.add(account);
+    }
+    if (monthlyRecords.has(monthKey)) {
+      monthlyRecords.set(monthKey, (monthlyRecords.get(monthKey) || 0) + 1);
+      monthlyAccounts.get(monthKey)?.add(account);
+    }
+  }
+
+  const toPoints = (
+    keys: string[],
+    recordsMap: Map<string, number>,
+    accountsMap: Map<string, Set<string>>,
+    labels: Map<string, string>
+  ): TrendPoint[] =>
+    keys.map((key) => ({
+      key,
+      label: labels.get(key) || key,
+      records: recordsMap.get(key) || 0,
+      accounts: accountsMap.get(key)?.size || 0,
+    }));
+
+  return {
+    daily: toPoints(dailyKeys, dailyRecords, dailyAccounts, dailyLabel),
+    weekly: toPoints(weeklyKeys, weeklyRecords, weeklyAccounts, weeklyLabel),
+    monthly: toPoints(
+      monthlyKeys,
+      monthlyRecords,
+      monthlyAccounts,
+      monthlyLabel
+    ),
+  };
 }
 
 export function buildAnalyticsSummary(
@@ -146,5 +267,6 @@ export function buildAnalyticsSummary(
     byReader: toSortedCounts(readers, 8),
     byMonth,
     byArea: toSortedCounts(areas, 8),
+    trends: buildTrendBuckets(records, now),
   };
 }

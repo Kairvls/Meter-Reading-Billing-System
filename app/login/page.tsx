@@ -58,9 +58,7 @@ export default function LoginPage() {
             <h1 className="text-2xl font-semibold tracking-tight text-[#006699] sm:text-3xl">
               Meter Reading & Billing
             </h1>
-            <p className="text-sm text-[#4d6f84]">
-              Admin sign-in for defective meter records
-            </p>
+            
           </div>
         </div>
 

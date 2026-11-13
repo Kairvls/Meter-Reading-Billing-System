@@ -31,6 +31,7 @@ export type ActivityAction =
   | "restore"
   | "reorder"
   | "export"
+  | "import"
   | "purge";
 
 export type ActivityLog = {
