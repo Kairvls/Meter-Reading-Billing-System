@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { FileUpIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import type { LookupItem, LookupKind } from "@/lib/lookups";
 
 type Props = {
@@ -13,6 +12,24 @@ type Props = {
   description: string;
 };
 
+function parseNames(raw: string): string[] {
+  const seen = new Set<string>();
+  const names: string[] = [];
+
+  for (const line of raw.split(/\r?\n/)) {
+    for (const part of line.split(/[,;\t]/)) {
+      const name = part.trim();
+      if (!name) continue;
+      const key = name.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      names.push(name);
+    }
+  }
+
+  return names;
+}
+
 export function LookupsMaintenance({ kind, title, description }: Props) {
   const [items, setItems] = useState<LookupItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,6 +37,8 @@ export function LookupsMaintenance({ kind, title, description }: Props) {
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const pendingNames = parseNames(name);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -40,19 +59,28 @@ export function LookupsMaintenance({ kind, title, description }: Props) {
   }, [load]);
 
   async function handleAdd() {
-    const trimmed = name.trim();
-    if (!trimmed) return;
+    const names = parseNames(name);
+    if (names.length === 0) return;
+
     setSaving(true);
     try {
-      const res = await fetch("/api/lookups", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind, name: trimmed }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || "Failed to add");
+      let added = 0;
+      for (const itemName of names) {
+        const res = await fetch("/api/lookups", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ kind, name: itemName }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          throw new Error(data.error || `Failed to add "${itemName}"`);
+        }
+        added += 1;
+      }
       setName("");
-      toast.success("Added");
+      toast.success(
+        added === 1 ? "Added 1 item" : `Added ${added} items`
+      );
       await load();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to add");
@@ -83,15 +111,18 @@ export function LookupsMaintenance({ kind, title, description }: Props) {
         .split(/\r?\n/)
         .map((line) => line.split(/[,\t]/)[0]?.trim() || "")
         .filter(Boolean)
-        .filter((line) => !/^(name|meter reader|address|reader)$/i.test(line));
+        .filter(
+          (line) =>
+            !/^(name|meter reader|address|reader|municipality|city)$/i.test(
+              line
+            )
+        );
 
       if (names.length === 0) {
         toast.error("No names found in file");
         return;
       }
 
-      // Merge with existing (append unique) by posting each, or replace?
-      // Upload = import/add unique names on top of existing.
       let added = 0;
       for (const itemName of names) {
         const res = await fetch("/api/lookups", {
@@ -142,28 +173,54 @@ export function LookupsMaintenance({ kind, title, description }: Props) {
           </div>
         </div>
 
-        <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-          <Input
+        <div className="mt-5 space-y-2">
+          <label className="block text-sm font-medium text-[#3d5a6c]">
+            Add one or more names
+          </label>
+          <textarea
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="New item name"
-            className="h-10 text-[15px]"
+            placeholder={"One name per line (or comma-separated)\n\nAlbuera\nOrmoc City\nKananga"}
+            rows={5}
+            className="w-full resize-y rounded-xl border border-[#d7e4ec] bg-white px-3.5 py-3 text-[15px] text-[#0f3a52] outline-none placeholder:text-[#9aafbc] focus:border-[#0099cc] focus:ring-2 focus:ring-[#0099cc]/20"
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
+              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault();
                 void handleAdd();
               }
             }}
           />
-          <Button
-            type="button"
-            className="bg-[#0099cc] text-white hover:bg-[#0086b3]"
-            disabled={saving || !name.trim()}
-            onClick={() => void handleAdd()}
-          >
-            <PlusIcon />
-            {saving ? "Adding..." : "Add"}
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-[13px] text-[#6b7c89]">
+              Tip: paste a list, then press{" "}
+              <kbd className="rounded border border-[#d7e4ec] bg-[#f5f9fb] px-1.5 py-0.5 text-[12px]">
+                Ctrl
+              </kbd>
+              +
+              <kbd className="rounded border border-[#d7e4ec] bg-[#f5f9fb] px-1.5 py-0.5 text-[12px]">
+                Enter
+              </kbd>{" "}
+              to add all.
+              {pendingNames.length > 0 ? (
+                <span className="ml-1 font-medium text-[#006699]">
+                  {pendingNames.length} ready
+                </span>
+              ) : null}
+            </p>
+            <Button
+              type="button"
+              className="bg-[#0099cc] text-white hover:bg-[#0086b3] sm:min-w-[120px]"
+              disabled={saving || pendingNames.length === 0}
+              onClick={() => void handleAdd()}
+            >
+              <PlusIcon />
+              {saving
+                ? "Adding..."
+                : pendingNames.length > 1
+                  ? `Add ${pendingNames.length}`
+                  : "Add"}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -174,7 +231,7 @@ export function LookupsMaintenance({ kind, title, description }: Props) {
           </p>
         ) : items.length === 0 ? (
           <p className="px-5 py-10 text-center text-[15px] text-[#6b7c89]">
-            No items yet. Add one or upload a list (.txt / .csv).
+            No items yet. Add one or more names, or upload a list (.txt / .csv).
           </p>
         ) : (
           <ul className="divide-y divide-[#eef3f6]">

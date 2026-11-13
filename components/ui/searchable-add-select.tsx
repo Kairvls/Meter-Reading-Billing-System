@@ -79,7 +79,7 @@ export function SearchableAddSelect({
         aria-expanded={open}
         aria-haspopup="listbox"
         onClick={() => setOpen((prev) => !prev)}
-        className="border-input bg-background flex h-10 w-full items-center justify-between rounded-md border px-3 text-left text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-[#0099cc]/30 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex h-11 w-full items-center justify-between rounded-lg border border-[#e5eaf0] bg-white px-3 text-left text-[15px] text-[#1f3645] outline-none focus-visible:border-[#0099cc] focus-visible:ring-2 focus-visible:ring-[#0099cc]/20 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span className={value ? "text-[#0f3a52]" : "text-[#8aa0ad]"}>
           {value || placeholder}
