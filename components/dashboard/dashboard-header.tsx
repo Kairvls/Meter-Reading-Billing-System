@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { motion } from "motion/react";
 import {
   BarChart3Icon,
   LayoutDashboardIcon,
@@ -146,14 +147,25 @@ export function DashboardHeader() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-[15px] font-medium transition ${
+                  className={`relative inline-flex items-center gap-2 px-3.5 py-2.5 text-[15px] font-medium transition-colors duration-200 ${
                     active
-                      ? "bg-[#0099cc] text-white shadow-sm"
-                      : "text-[#4d6f84] hover:bg-[#e8f7fc] hover:text-[#006699]"
+                      ? "text-[#0099cc]"
+                      : "text-[#4d6f84] hover:text-[#006699]"
                   }`}
                 >
                   <Icon className="size-4 shrink-0" />
                   {item.label}
+                  {active ? (
+                    <motion.span
+                      layoutId="dashboard-nav-underline"
+                      className="absolute right-2 bottom-0 left-2 h-0.5 rounded-full bg-[#0099cc]"
+                      transition={{
+                        type: "spring",
+                        stiffness: 420,
+                        damping: 34,
+                      }}
+                    />
+                  ) : null}
                 </Link>
               );
             })}

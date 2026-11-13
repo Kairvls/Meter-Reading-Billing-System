@@ -2,10 +2,12 @@
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import {
+  Building2Icon,
   ClipboardListIcon,
   ImageIcon,
   LandmarkIcon,
   MapPinIcon,
+  SignpostIcon,
   XIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -397,28 +399,40 @@ export function RecordFormDialog({
                   placeholder="House / building / lot"
                 />
               </Field>
-              <Field label="Brgy" htmlFor="barangay">
-                <Input
-                  id="barangay"
-                  className={fieldInputClass}
-                  value={form.barangay}
-                  onChange={(e) =>
-                    update("barangay", firstCapitalRestLower(e.target.value))
-                  }
-                  placeholder="Barangay"
-                />
+              <div className="space-y-1.5">
+                <Label htmlFor="barangay" className={labelClass}>
+                  Brgy
+                </Label>
+                <div className="relative">
+                  <Building2Icon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#0099cc]" />
+                  <Input
+                    id="barangay"
+                    className={`${fieldInputClass} pl-9`}
+                    value={form.barangay}
+                    onChange={(e) =>
+                      update("barangay", firstCapitalRestLower(e.target.value))
+                    }
+                    placeholder="Barangay"
+                  />
+                </div>
                 <p className="text-xs text-[#9aabba]">
                   First letter capital, rest lowercase
                 </p>
-              </Field>
-              <Field label="St. / Blk / Sitio / Purok" htmlFor="streetBlock">
-                <Input
-                  id="streetBlock"
-                  className={fieldInputClass}
-                  value={form.streetBlock}
-                  onChange={(e) => update("streetBlock", e.target.value)}
-                />
-              </Field>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="streetBlock" className={labelClass}>
+                  St. / Blk / Sitio / Purok
+                </Label>
+                <div className="relative">
+                  <SignpostIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#0099cc]" />
+                  <Input
+                    id="streetBlock"
+                    className={`${fieldInputClass} pl-9`}
+                    value={form.streetBlock}
+                    onChange={(e) => update("streetBlock", e.target.value)}
+                  />
+                </div>
+              </div>
               <div className="space-y-1.5">
                 <Label htmlFor="landmark" className={labelClass}>
                   Landmark

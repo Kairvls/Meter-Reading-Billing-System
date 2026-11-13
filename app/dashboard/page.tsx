@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { motion } from "motion/react";
 import {
   DndContext,
   PointerSensor,
@@ -22,15 +23,14 @@ import {
   FileDownIcon,
   FileSpreadsheetIcon,
   FileUpIcon,
-  PencilIcon,
   PlusIcon,
   PrinterIcon,
-  Trash2Icon,
   XIcon,
 } from "lucide-react";
 import { ExportSignatoriesDialog } from "@/components/dashboard/export-signatories-dialog";
 import { ImageViewDialog } from "@/components/dashboard/image-view-dialog";
 import { RecordFormDialog } from "@/components/dashboard/record-form-dialog";
+import { RecordViewDialog } from "@/components/dashboard/record-view-dialog";
 import { SortableRecordRow } from "@/components/dashboard/sortable-record-row";
 import { Button } from "@/components/ui/button";
 import {
@@ -95,12 +95,7 @@ export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState("");
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [page, setPage] = useState(1);
-  const tableAreaRef = useRef<HTMLDivElement>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
-  const [hoveredRow, setHoveredRow] = useState<{
-    record: MeterRecord;
-    top: number;
-  } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<MeterRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [savingOrder, setSavingOrder] = useState(false);
@@ -112,6 +107,7 @@ export default function DashboardPage() {
   const [imageViewRecord, setImageViewRecord] = useState<MeterRecord | null>(
     null
   );
+  const [viewRecord, setViewRecord] = useState<MeterRecord | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -281,7 +277,6 @@ export default function DashboardPage() {
       (record, index) => ({ ...record, sortOrder: index })
     );
     setRecords(nextRecords);
-    setHoveredRow(null);
     await persistOrder(nextRecords);
   }
 
@@ -306,7 +301,6 @@ export default function DashboardPage() {
         toast.success("Record deleted");
       }
       setDeleteTarget(null);
-      setHoveredRow(null);
       await loadRecords();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Delete failed");
@@ -413,21 +407,41 @@ export default function DashboardPage() {
     <main>
       <section className="relative z-10 mx-auto w-full max-w-7xl space-y-5 overflow-x-clip px-4 py-6 sm:px-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap gap-2">
-            {filters.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setPeriod(item.id)}
-                className={`cursor-pointer rounded-lg px-3.5 py-2 text-[15px] font-medium transition ${
-                  period === item.id
-                    ? "bg-[#0099cc] text-white shadow-sm"
-                    : "bg-white text-[#4d6f84] ring-1 ring-[#cfe6f2] hover:bg-[#e8f7fc]"
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
+          <div
+            role="tablist"
+            aria-label="Period filter"
+            className="inline-flex flex-wrap gap-1 rounded-xl border border-[#e8eef3] bg-[#f4f7fa] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]"
+          >
+            {filters.map((item) => {
+              const active = period === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setPeriod(item.id)}
+                  className={`relative cursor-pointer rounded-lg px-3.5 py-1.5 text-sm font-medium tracking-tight transition-colors duration-200 ${
+                    active
+                      ? "text-white"
+                      : "text-[#5a7384] hover:text-[#0f3a52]"
+                  }`}
+                >
+                  {active ? (
+                    <motion.span
+                      layoutId="period-filter-pill"
+                      className="absolute inset-0 rounded-lg bg-[#0099cc] shadow-[0_1px_3px_rgba(0,153,204,0.35)]"
+                      transition={{
+                        type: "spring",
+                        stiffness: 420,
+                        damping: 34,
+                      }}
+                    />
+                  ) : null}
+                  <span className="relative z-10">{item.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -549,13 +563,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div
-          ref={tableAreaRef}
-          className="relative w-full"
-          onMouseLeave={() => {
-            if (!deleteTarget) setHoveredRow(null);
-          }}
-        >
+        <div className="relative w-full">
           <div className="relative w-full overflow-hidden rounded-2xl border border-[#e6eef3] bg-white shadow-[0_8px_30px_rgba(15,58,82,0.05)]">
             <div className="flex flex-col gap-3 border-b border-[#eef3f6] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -567,7 +575,9 @@ export default function DashboardPage() {
                     ? "Loading records..."
                     : savingOrder
                       ? "Saving row order..."
-                      : `${filtered.length} record${filtered.length === 1 ? "" : "s"} · showing ${pageRows.length} of page ${currentPage}/${totalPages}`}
+                      : totalPages > 1
+                        ? `${filtered.length} record${filtered.length === 1 ? "" : "s"} · showing ${pageRows.length} of page ${currentPage}/${totalPages}`
+                        : `${filtered.length} record${filtered.length === 1 ? "" : "s"}`}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -634,7 +644,7 @@ export default function DashboardPage() {
                 collisionDetection={closestCenter}
                 onDragEnd={(event) => void handleDragEnd(event)}
               >
-                <table className="w-full min-w-[1100px] table-fixed border-collapse bg-white font-sans">
+                <table className="w-full min-w-[1160px] table-fixed border-collapse bg-white font-sans">
                   <colgroup>
                     <col className="w-[3%]" />
                     <col className="w-[7%]" />
@@ -643,11 +653,12 @@ export default function DashboardPage() {
                     <col className="w-[10%]" />
                     <col className="w-[8%]" />
                     <col className="w-[8%]" />
-                    <col className="w-[9%]" />
-                    <col className="w-[12%]" />
-                    <col className="w-[9%]" />
                     <col className="w-[8%]" />
+                    <col className="w-[11%]" />
                     <col className="w-[8%]" />
+                    <col className="w-[7%]" />
+                    <col className="w-[7%]" />
+                    <col className="w-[5%]" />
                   </colgroup>
                   <thead>
                     <tr>
@@ -663,6 +674,7 @@ export default function DashboardPage() {
                       <th className={headerClass}>Landmark</th>
                       <th className={headerClass}>Latitude</th>
                       <th className={headerClass}>Longitude</th>
+                      <th className={headerClass} aria-label="Actions" />
                     </tr>
                   </thead>
                   <SortableContext
@@ -673,7 +685,7 @@ export default function DashboardPage() {
                       {!loading && pageRows.length === 0 ? (
                         <tr>
                           <td
-                            colSpan={12}
+                            colSpan={13}
                             className="px-5 py-12 text-center text-sm text-[#6b7c89]"
                           >
                             No records found for this filter.
@@ -687,20 +699,12 @@ export default function DashboardPage() {
                             headerClass={headerClass}
                             cellClass={cellClass}
                             onViewImage={setImageViewRecord}
-                            onHover={(event, hovered) => {
-                              const area = tableAreaRef.current;
-                              if (!area) return;
-                              const areaRect = area.getBoundingClientRect();
-                              const rowRect =
-                                event.currentTarget.getBoundingClientRect();
-                              setHoveredRow({
-                                record: hovered,
-                                top:
-                                  rowRect.top -
-                                  areaRect.top +
-                                  rowRect.height / 2,
-                              });
+                            onView={setViewRecord}
+                            onEdit={(row) => {
+                              setEditing(row);
+                              setDialogOpen(true);
                             }}
+                            onDelete={setDeleteTarget}
                           />
                         ))
                       )}
@@ -710,79 +714,43 @@ export default function DashboardPage() {
               </DndContext>
             </div>
 
-            <div className="flex flex-col gap-3 border-t border-[#eef3f6] px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-[#6b7c89]">
-                {filtered.length === 0
-                  ? "0–0 of 0"
-                  : `${(currentPage - 1) * PAGE_SIZE + 1}–${Math.min(currentPage * PAGE_SIZE, filtered.length)} of ${filtered.length}`}
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="border-[#cfe6f2] text-[#006699]"
-                  disabled={currentPage <= 1 || loading}
-                  onClick={() => {
-                    setPage((p) => Math.max(1, p - 1));
-                    setHoveredRow(null);
-                  }}
-                >
-                  <ChevronLeftIcon />
-                  Prev
-                </Button>
-                <span className="min-w-20 text-center text-sm font-medium text-[#0f3a52]">
-                  Page {currentPage} / {totalPages}
-                </span>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="border-[#cfe6f2] text-[#006699]"
-                  disabled={currentPage >= totalPages || loading}
-                  onClick={() => {
-                    setPage((p) => Math.min(totalPages, p + 1));
-                    setHoveredRow(null);
-                  }}
-                >
-                  Next
-                  <ChevronRightIcon />
-                </Button>
+            {totalPages > 1 ? (
+              <div className="flex flex-col gap-3 border-t border-[#eef3f6] px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-[#6b7c89]">
+                  {filtered.length === 0
+                    ? "0–0 of 0"
+                    : `${(currentPage - 1) * PAGE_SIZE + 1}–${Math.min(currentPage * PAGE_SIZE, filtered.length)} of ${filtered.length}`}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="border-[#cfe6f2] text-[#006699]"
+                    disabled={currentPage <= 1 || loading}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  >
+                    <ChevronLeftIcon />
+                    Prev
+                  </Button>
+                  <span className="min-w-20 text-center text-sm font-medium text-[#0f3a52]">
+                    Page {currentPage} / {totalPages}
+                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="border-[#cfe6f2] text-[#006699]"
+                    disabled={currentPage >= totalPages || loading}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  >
+                    Next
+                    <ChevronRightIcon />
+                  </Button>
+                </div>
               </div>
-            </div>
+            ) : null}
           </div>
-
-          {hoveredRow ? (
-            <div
-              className="pointer-events-auto absolute right-2 z-30 flex -translate-y-1/2 flex-col gap-1.5"
-              style={{ top: hoveredRow.top }}
-              onMouseEnter={() => setHoveredRow(hoveredRow)}
-            >
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="border-[#0099cc]/40 bg-white text-[#006699] shadow-md hover:bg-[#e8f7fc]"
-                onClick={() => {
-                  setEditing(hoveredRow.record);
-                  setDialogOpen(true);
-                }}
-              >
-                <PencilIcon />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="border-red-200 bg-white text-red-600 shadow-md hover:bg-red-50"
-                onClick={() => setDeleteTarget(hoveredRow.record)}
-              >
-                <Trash2Icon />
-                Delete
-              </Button>
-            </div>
-          ) : null}
         </div>
       </section>
 
@@ -794,6 +762,21 @@ export default function DashboardPage() {
         }}
         initial={editing}
         onSubmit={handleSave}
+      />
+
+      <RecordViewDialog
+        open={!!viewRecord}
+        record={viewRecord}
+        onOpenChange={(open) => {
+          if (!open) setViewRecord(null);
+        }}
+        onEdit={(record) => {
+          setEditing(record);
+          setDialogOpen(true);
+        }}
+        onViewImage={(record) => {
+          setImageViewRecord(record);
+        }}
       />
 
       <ImageViewDialog

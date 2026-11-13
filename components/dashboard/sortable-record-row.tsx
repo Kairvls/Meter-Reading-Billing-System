@@ -3,8 +3,21 @@
 import { useEffect, useRef, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { EyeIcon, GripVerticalIcon } from "lucide-react";
+import {
+  EyeIcon,
+  GripVerticalIcon,
+  MoreHorizontalIcon,
+  PencilIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { HoverTooltip } from "@/components/ui/hover-tooltip";
 import { TruncatedText } from "@/components/ui/truncated-text";
 import { formatFullAddress } from "@/lib/address-format";
@@ -15,15 +28,19 @@ type Props = {
   record: MeterRecord;
   headerClass: string;
   cellClass: string;
-  onHover: (event: React.MouseEvent<HTMLTableRowElement>, record: MeterRecord) => void;
   onViewImage: (record: MeterRecord) => void;
+  onView: (record: MeterRecord) => void;
+  onEdit: (record: MeterRecord) => void;
+  onDelete: (record: MeterRecord) => void;
 };
 
 export function SortableRecordRow({
   record,
   cellClass,
-  onHover,
   onViewImage,
+  onView,
+  onEdit,
+  onDelete,
 }: Props) {
   const {
     attributes,
@@ -51,7 +68,6 @@ export function SortableRecordRow({
       ref={setNodeRef}
       style={style}
       className="bg-white transition-colors hover:bg-[#f7fafc]"
-      onMouseEnter={(event) => onHover(event, record)}
     >
       <td className={`${cellClass} w-10 overflow-hidden`}>
         <button
@@ -78,7 +94,7 @@ export function SortableRecordRow({
           }}
         >
           <EyeIcon />
-          View
+          Photo
         </Button>
       </td>
       <td className={`${cellClass} overflow-hidden`}>
@@ -113,6 +129,41 @@ export function SortableRecordRow({
       </td>
       <td className={`${cellClass} overflow-hidden`}>
         <TruncatedText text={longText} />
+      </td>
+      <td className={`${cellClass} overflow-visible`}>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            aria-label="Row actions"
+            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-lg border border-[#cfe6f2] bg-white text-[#4d6f84] outline-none hover:bg-[#e8f7fc] hover:text-[#006699] focus-visible:ring-2 focus-visible:ring-[#0099cc]/30"
+          >
+            <MoreHorizontalIcon className="size-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-40">
+            <DropdownMenuItem
+              className="cursor-pointer gap-2 text-[#0f3a52]"
+              onClick={() => onView(record)}
+            >
+              <EyeIcon className="size-4 text-[#0099cc]" />
+              View
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="cursor-pointer gap-2 text-[#0f3a52]"
+              onClick={() => onEdit(record)}
+            >
+              <PencilIcon className="size-4 text-[#0099cc]" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              variant="destructive"
+              className="cursor-pointer gap-2"
+              onClick={() => onDelete(record)}
+            >
+              <Trash2Icon className="size-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </td>
     </tr>
   );
