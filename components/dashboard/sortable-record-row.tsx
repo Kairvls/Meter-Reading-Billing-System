@@ -65,6 +65,22 @@ export function SortableRecordRow({
         </button>
       </td>
       <td className={`${cellClass} overflow-hidden`}>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="border-[#0099cc]/40 text-[#006699] hover:bg-[#e8f7fc]"
+          disabled={!record.imageUrl}
+          onClick={(e) => {
+            e.stopPropagation();
+            onViewImage(record);
+          }}
+        >
+          <EyeIcon />
+          View
+        </Button>
+      </td>
+      <td className={`${cellClass} overflow-hidden`}>
         <TruncatedText text={record.date} />
       </td>
       <td className={`${cellClass} overflow-hidden`}>
@@ -96,22 +112,6 @@ export function SortableRecordRow({
       </td>
       <td className={`${cellClass} overflow-hidden`}>
         <TruncatedText text={longText} />
-      </td>
-      <td className={`${cellClass} overflow-hidden`}>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          className="border-[#0099cc]/40 text-[#006699] hover:bg-[#e8f7fc]"
-          disabled={!record.imageUrl}
-          onClick={(e) => {
-            e.stopPropagation();
-            onViewImage(record);
-          }}
-        >
-          <EyeIcon />
-          View
-        </Button>
       </td>
     </tr>
   );

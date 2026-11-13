@@ -632,6 +632,7 @@ export default function DashboardPage() {
                 <table className="w-full min-w-[1100px] table-fixed border-collapse bg-white font-sans">
                   <colgroup>
                     <col className="w-[3%]" />
+                    <col className="w-[7%]" />
                     <col className="w-[8%]" />
                     <col className="w-[10%]" />
                     <col className="w-[10%]" />
@@ -642,11 +643,11 @@ export default function DashboardPage() {
                     <col className="w-[9%]" />
                     <col className="w-[8%]" />
                     <col className="w-[8%]" />
-                    <col className="w-[7%]" />
                   </colgroup>
                   <thead>
                     <tr>
                       <th className={headerClass} aria-label="Reorder" />
+                      <th className={headerClass}>Image</th>
                       <th className={headerClass}>Date</th>
                       <th className={headerClass}>Account No.</th>
                       <th className={headerClass}>Account Name</th>
@@ -657,7 +658,6 @@ export default function DashboardPage() {
                       <th className={headerClass}>Landmark</th>
                       <th className={headerClass}>Latitude</th>
                       <th className={headerClass}>Longitude</th>
-                      <th className={headerClass}>Image</th>
                     </tr>
                   </thead>
                   <SortableContext
