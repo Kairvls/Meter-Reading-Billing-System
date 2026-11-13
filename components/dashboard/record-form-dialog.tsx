@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import {
   Building2Icon,
   ClipboardListIcon,
+  HomeIcon,
   ImageIcon,
   LandmarkIcon,
   MapPinIcon,
@@ -390,15 +391,21 @@ export function RecordFormDialog({
                   </div>
                 </div>
               </div>
-              <Field label="Home Address" htmlFor="homeAddress">
-                <Input
-                  id="homeAddress"
-                  className={fieldInputClass}
-                  value={form.homeAddress}
-                  onChange={(e) => update("homeAddress", e.target.value)}
-                  placeholder="House / building / lot"
-                />
-              </Field>
+              <div className="space-y-1.5">
+                <Label htmlFor="homeAddress" className={labelClass}>
+                  Home Address
+                </Label>
+                <div className="relative">
+                  <HomeIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#0099cc]" />
+                  <Input
+                    id="homeAddress"
+                    className={`${fieldInputClass} pl-9`}
+                    value={form.homeAddress}
+                    onChange={(e) => update("homeAddress", e.target.value)}
+                    placeholder="House / building / lot"
+                  />
+                </div>
+              </div>
               <div className="space-y-1.5">
                 <Label htmlFor="barangay" className={labelClass}>
                   Brgy

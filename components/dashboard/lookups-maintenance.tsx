@@ -12,12 +12,21 @@ type Props = {
   description: string;
 };
 
-function parseNames(raw: string): string[] {
+function isPersonLookup(kind: LookupKind) {
+  return kind === "meter_reader" || kind === "sep_meter_reader";
+}
+
+function parseNames(raw: string, kind: LookupKind): string[] {
   const seen = new Set<string>();
   const names: string[] = [];
 
   for (const line of raw.split(/\r?\n/)) {
-    for (const part of line.split(/[,;\t]/)) {
+    // Person names keep commas (Last, First, Middle). Places may be comma-separated.
+    const parts = isPersonLookup(kind)
+      ? [line]
+      : line.split(/[;\t]/).flatMap((chunk) => chunk.split(","));
+
+    for (const part of parts) {
       const name = part.trim();
       if (!name) continue;
       const key = name.toLowerCase();
@@ -30,6 +39,13 @@ function parseNames(raw: string): string[] {
   return names;
 }
 
+function placeholderFor(kind: LookupKind) {
+  if (isPersonLookup(kind)) {
+    return "One name per line\nFormat: Last name, First name, Middle name\n\nReyes, Alfar, R\nSantos, Juan, D\nDela Cruz, Maria, A";
+  }
+  return "One name per line (or comma-separated)\n\nAlbuera\nOrmoc City\nKananga";
+}
+
 export function LookupsMaintenance({ kind, title, description }: Props) {
   const [items, setItems] = useState<LookupItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +54,7 @@ export function LookupsMaintenance({ kind, title, description }: Props) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const pendingNames = parseNames(name);
+  const pendingNames = parseNames(name, kind);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -59,7 +75,7 @@ export function LookupsMaintenance({ kind, title, description }: Props) {
   }, [load]);
 
   async function handleAdd() {
-    const names = parseNames(name);
+    const names = parseNames(name, kind);
     if (names.length === 0) return;
 
     setSaving(true);
@@ -175,12 +191,14 @@ export function LookupsMaintenance({ kind, title, description }: Props) {
 
         <div className="mt-5 space-y-2">
           <label className="block text-sm font-medium text-[#3d5a6c]">
-            Add one or more names
+            {isPersonLookup(kind)
+              ? "Add one or more reader names"
+              : "Add one or more names"}
           </label>
           <textarea
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder={"One name per line (or comma-separated)\n\nAlbuera\nOrmoc City\nKananga"}
+            placeholder={placeholderFor(kind)}
             rows={5}
             className="w-full resize-y rounded-xl border border-[#d7e4ec] bg-white px-3.5 py-3 text-[15px] text-[#0f3a52] outline-none placeholder:text-[#9aafbc] focus:border-[#0099cc] focus:ring-2 focus:ring-[#0099cc]/20"
             onKeyDown={(e) => {
@@ -192,7 +210,19 @@ export function LookupsMaintenance({ kind, title, description }: Props) {
           />
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[13px] text-[#6b7c89]">
-              Tip: paste a list, then press{" "}
+              {isPersonLookup(kind) ? (
+                <>
+                  Format:{" "}
+                  <span className="font-medium text-[#3d5a6c]">
+                    Last name, First name, Middle name
+                  </span>
+                  . One per line. Press{" "}
+                </>
+              ) : (
+                <>
+                  Tip: paste a list, then press{" "}
+                </>
+              )}
               <kbd className="rounded border border-[#d7e4ec] bg-[#f5f9fb] px-1.5 py-0.5 text-[12px]">
                 Ctrl
               </kbd>
