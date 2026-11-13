@@ -2,7 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  serverExternalPackages: ["better-sqlite3"],
+  // Keep native / CJS-heavy packages external so Vercel doesn't break on ESM (jose).
+  serverExternalPackages: ["better-sqlite3", "firebase-admin", "@google-cloud/firestore"],
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {

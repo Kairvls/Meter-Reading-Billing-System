@@ -4,7 +4,6 @@ import {
   initializeApp,
   type App,
 } from "firebase-admin/app";
-import { getAuth, type Auth } from "firebase-admin/auth";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
 
 function getPrivateKey() {
@@ -40,7 +39,6 @@ function createAdminApp(): App {
 }
 
 let adminApp: App | undefined;
-let adminAuth: Auth | undefined;
 let adminDb: Firestore | undefined;
 
 export function getAdminApp() {
@@ -48,13 +46,6 @@ export function getAdminApp() {
     adminApp = createAdminApp();
   }
   return adminApp;
-}
-
-export function getAdminAuth() {
-  if (!adminAuth) {
-    adminAuth = getAuth(getAdminApp());
-  }
-  return adminAuth;
 }
 
 export function getAdminFirestore() {
