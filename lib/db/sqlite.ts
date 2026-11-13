@@ -47,6 +47,9 @@ function migrate(db: Database.Database) {
       account_number TEXT NOT NULL,
       account_name TEXT NOT NULL,
       address TEXT NOT NULL,
+      home_address TEXT NOT NULL DEFAULT '',
+      barangay TEXT NOT NULL DEFAULT '',
+      street_block TEXT NOT NULL DEFAULT '',
       meter_number TEXT NOT NULL,
       meter_reader TEXT NOT NULL,
       sep_meter_reader TEXT NOT NULL DEFAULT '',
@@ -68,6 +71,9 @@ function migrate(db: Database.Database) {
       account_number TEXT NOT NULL,
       account_name TEXT NOT NULL,
       address TEXT NOT NULL,
+      home_address TEXT NOT NULL DEFAULT '',
+      barangay TEXT NOT NULL DEFAULT '',
+      street_block TEXT NOT NULL DEFAULT '',
       meter_number TEXT NOT NULL,
       meter_reader TEXT NOT NULL,
       sep_meter_reader TEXT NOT NULL DEFAULT '',
@@ -116,6 +122,9 @@ function migrate(db: Database.Database) {
     ensureColumn(db, table, "longitude", "TEXT NOT NULL DEFAULT ''");
     ensureColumn(db, table, "image_url", "TEXT NOT NULL DEFAULT ''");
     ensureColumn(db, table, "sep_meter_reader", "TEXT NOT NULL DEFAULT ''");
+    ensureColumn(db, table, "home_address", "TEXT NOT NULL DEFAULT ''");
+    ensureColumn(db, table, "barangay", "TEXT NOT NULL DEFAULT ''");
+    ensureColumn(db, table, "street_block", "TEXT NOT NULL DEFAULT ''");
   }
 }
 

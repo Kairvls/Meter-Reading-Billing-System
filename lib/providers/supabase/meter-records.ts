@@ -40,6 +40,9 @@ type MeterRow = {
   account_number: string;
   account_name: string;
   address: string;
+  home_address: string | null;
+  barangay: string | null;
+  street_block: string | null;
   meter_number: string;
   meter_reader: string;
   sep_meter_reader: string | null;
@@ -67,6 +70,9 @@ function rowToRecord(row: MeterRow): MeterRecord {
     accountNumber: row.account_number,
     accountName: row.account_name,
     address: row.address,
+    homeAddress: row.home_address ?? "",
+    barangay: row.barangay ?? "",
+    streetBlock: row.street_block ?? "",
     meterNumber: row.meter_number,
     meterReader: row.meter_reader,
     sepMeterReader: row.sep_meter_reader ?? "",
@@ -98,6 +104,9 @@ function recordToRow(record: MeterRecord) {
     account_number: record.accountNumber,
     account_name: record.accountName,
     address: record.address,
+    home_address: record.homeAddress,
+    barangay: record.barangay,
+    street_block: record.streetBlock,
     meter_number: record.meterNumber,
     meter_reader: record.meterReader,
     sep_meter_reader: record.sepMeterReader,

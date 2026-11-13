@@ -168,8 +168,13 @@ export default function DashboardPage() {
         r.accountName,
         r.meterNumber,
         r.meterReader,
+        r.sepMeterReader,
         r.remarks,
         r.address,
+        r.homeAddress,
+        r.barangay,
+        r.streetBlock,
+        r.landmark,
       ]
         .join(" ")
         .toLowerCase()

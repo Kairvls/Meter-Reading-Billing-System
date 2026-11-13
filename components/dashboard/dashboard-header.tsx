@@ -64,7 +64,7 @@ const navItems: {
   },
   {
     href: "/dashboard/addresses",
-    label: "Addresses",
+    label: "Municipalities",
     match: "prefix",
     icon: MapPinnedIcon,
   },

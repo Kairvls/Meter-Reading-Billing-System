@@ -226,7 +226,16 @@ export function buildAnalyticsSummary(
     accounts.add(record.accountNumber.trim() || record.id);
     increment(remarks, record.remarks);
     increment(readers, record.meterReader);
-    increment(areas, areaFromAddress(record.address));
+    // Prefer municipality/city; fall back to composed address parts.
+    increment(
+      areas,
+      record.address.trim() ||
+        areaFromAddress(
+          [record.homeAddress, record.barangay, record.streetBlock, record.landmark]
+            .filter(Boolean)
+            .join(", ")
+        )
+    );
 
     const recordDate = parseRecordDate(record.date);
     if (!recordDate) continue;

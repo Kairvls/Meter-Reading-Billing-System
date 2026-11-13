@@ -7,6 +7,7 @@ import { EyeIcon, GripVerticalIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HoverTooltip } from "@/components/ui/hover-tooltip";
 import { TruncatedText } from "@/components/ui/truncated-text";
+import { formatFullAddress } from "@/lib/address-format";
 import { formatCoordinate } from "@/lib/image-utils";
 import type { MeterRecord } from "@/lib/types";
 
@@ -102,7 +103,7 @@ export function SortableRecordRow({
         <TruncatedPill text={record.remarks} />
       </td>
       <td className={`${cellClass} overflow-hidden`}>
-        <TruncatedText text={record.address} />
+        <TruncatedText text={formatFullAddress(record) || "—"} />
       </td>
       <td className={`${cellClass} overflow-hidden`}>
         <TruncatedText text={record.landmark || "—"} />

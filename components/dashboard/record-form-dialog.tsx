@@ -27,6 +27,7 @@ import {
 } from "@/lib/account-name";
 import { fileToCompressedDataUrl } from "@/lib/image-utils";
 import type { LookupKind } from "@/lib/lookups";
+import { firstCapitalRestLower } from "@/lib/title-case";
 import type { MeterRecord, MeterRecordInput } from "@/lib/types";
 
 function todayIsoDate() {
@@ -39,6 +40,9 @@ function createEmptyForm(date = ""): MeterRecordInput {
     accountNumber: "",
     accountName: "",
     address: "",
+    homeAddress: "",
+    barangay: "",
+    streetBlock: "",
     meterNumber: "",
     meterReader: "",
     sepMeterReader: "",
@@ -75,7 +79,7 @@ export function RecordFormDialog({
   const [compressing, setCompressing] = useState(false);
   const [readers, setReaders] = useState<string[]>([]);
   const [sepReaders, setSepReaders] = useState<string[]>([]);
-  const [addresses, setAddresses] = useState<string[]>([]);
+  const [municipalities, setMunicipalities] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const isEdit = Boolean(initial);
 
@@ -87,14 +91,14 @@ export function RecordFormDialog({
       return (data.items as Array<{ name: string }>).map((item) => item.name);
     }
     try {
-      const [readerNames, sepNames, addressNames] = await Promise.all([
+      const [readerNames, sepNames, cityNames] = await Promise.all([
         loadKind("meter_reader"),
         loadKind("sep_meter_reader"),
         loadKind("address"),
       ]);
       setReaders(readerNames);
       setSepReaders(sepNames);
-      setAddresses(addressNames);
+      setMunicipalities(cityNames);
     } catch {
       // keep empty lists; user can still add from dropdown
     }
@@ -109,6 +113,9 @@ export function RecordFormDialog({
         accountNumber: formatAccountNumber(initial.accountNumber),
         accountName: initial.accountName,
         address: initial.address,
+        homeAddress: initial.homeAddress ?? "",
+        barangay: initial.barangay ?? "",
+        streetBlock: initial.streetBlock ?? "",
         meterNumber: initial.meterNumber,
         meterReader: initial.meterReader,
         sepMeterReader: initial.sepMeterReader ?? "",
@@ -319,35 +326,66 @@ export function RecordFormDialog({
             />
           </Field>
 
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="address">Address</Label>
-            <div className="relative">
-              <MapPinIcon className="pointer-events-none absolute top-3 left-3 z-10 size-4 text-[#0099cc]" />
-              <div className="pl-9">
-                <SearchableAddSelect
-                  id="address"
-                  value={form.address}
-                  options={addresses}
-                  placeholder="Select address"
-                  required
-                  onChange={(value) => update("address", value)}
-                  onAddOption={async (name) => {
-                    await addLookup("address", name);
-                  }}
-                />
+          <div className="space-y-3 rounded-xl border border-[#eef3f6] bg-[#f7fafc] p-4 sm:col-span-2">
+            <p className="text-sm font-semibold text-[#006699]">Header Address</p>
+            <div className="space-y-2">
+              <Label htmlFor="municipality">Municipalities / City</Label>
+              <div className="relative">
+                <MapPinIcon className="pointer-events-none absolute top-3 left-3 z-10 size-4 text-[#0099cc]" />
+                <div className="pl-9">
+                  <SearchableAddSelect
+                    id="municipality"
+                    value={form.address}
+                    options={municipalities}
+                    placeholder="Select municipality / city"
+                    required
+                    onChange={(value) => update("address", value)}
+                    onAddOption={async (name) => {
+                      await addLookup("address", name);
+                    }}
+                  />
+                </div>
               </div>
             </div>
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="landmark">Landmark</Label>
-            <div className="relative">
-              <LandmarkIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#0099cc]" />
+            <Field label="Home Address" htmlFor="homeAddress">
               <Input
-                id="landmark"
-                className="pl-9"
-                value={form.landmark}
-                onChange={(e) => update("landmark", e.target.value)}
+                id="homeAddress"
+                value={form.homeAddress}
+                onChange={(e) => update("homeAddress", e.target.value)}
+                placeholder="House / building / lot"
               />
+            </Field>
+            <Field label="Brgy" htmlFor="barangay">
+              <Input
+                id="barangay"
+                value={form.barangay}
+                onChange={(e) =>
+                  update("barangay", firstCapitalRestLower(e.target.value))
+                }
+                placeholder="Barangay"
+              />
+              <p className="text-xs text-[#6b7c89]">
+                First letter capital, rest lowercase
+              </p>
+            </Field>
+            <Field label="St. / Blk / Sitio / Purok" htmlFor="streetBlock">
+              <Input
+                id="streetBlock"
+                value={form.streetBlock}
+                onChange={(e) => update("streetBlock", e.target.value)}
+              />
+            </Field>
+            <div className="space-y-2">
+              <Label htmlFor="landmark">Landmark</Label>
+              <div className="relative">
+                <LandmarkIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#0099cc]" />
+                <Input
+                  id="landmark"
+                  className="pl-9"
+                  value={form.landmark}
+                  onChange={(e) => update("landmark", e.target.value)}
+                />
+              </div>
             </div>
           </div>
           <Field label="Latitude" htmlFor="latitude">

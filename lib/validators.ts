@@ -8,7 +8,10 @@ export const meterRecordSchema = z.object({
     .min(1, "Account number is required")
     .regex(ACCOUNT_NUMBER_PATTERN, "Account number must be 00-0000-0000"),
   accountName: z.string().min(1, "Account name is required"),
-  address: z.string().min(1, "Address is required"),
+  address: z.string().min(1, "Municipality / City is required"),
+  homeAddress: z.string().optional().default(""),
+  barangay: z.string().optional().default(""),
+  streetBlock: z.string().optional().default(""),
   meterNumber: z.string().min(1, "Meter number is required"),
   meterReader: z.string().min(1, "Meter reader is required"),
   sepMeterReader: z.string().optional().default(""),

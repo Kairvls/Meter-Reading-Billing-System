@@ -13,6 +13,9 @@ type MeterRow = {
   account_number: string;
   account_name: string;
   address: string;
+  home_address: string;
+  barangay: string;
+  street_block: string;
   meter_number: string;
   meter_reader: string;
   sep_meter_reader: string;
@@ -51,6 +54,9 @@ function rowToRecord(row: MeterRow): MeterRecord {
     accountNumber: row.account_number,
     accountName: row.account_name,
     address: row.address,
+    homeAddress: row.home_address ?? "",
+    barangay: row.barangay ?? "",
+    streetBlock: row.street_block ?? "",
     meterNumber: row.meter_number,
     meterReader: row.meter_reader,
     sepMeterReader: row.sep_meter_reader ?? "",
@@ -93,11 +99,11 @@ export function replaceMeterRecordsCopy(records: MeterRecord[]) {
   const clear = db.prepare("DELETE FROM meter_records");
   const insert = db.prepare(`
     INSERT INTO meter_records (
-      id, date, account_number, account_name, address, meter_number,
+      id, date, account_number, account_name, address, home_address, barangay, street_block, meter_number,
       meter_reader, sep_meter_reader, remarks, contact_number, landmark, latitude, longitude,
       image_url, date_received, sort_order, created_at, updated_at
     ) VALUES (
-      @id, @date, @accountNumber, @accountName, @address, @meterNumber,
+      @id, @date, @accountNumber, @accountName, @address, @homeAddress, @barangay, @streetBlock, @meterNumber,
       @meterReader, @sepMeterReader, @remarks, @contactNumber, @landmark, @latitude, @longitude,
       @imageUrl, @dateReceived, @sortOrder, @createdAt, @updatedAt
     )
@@ -116,11 +122,11 @@ export function upsertMeterRecordCopy(record: MeterRecord) {
   const db = getOfflineDb();
   db.prepare(`
     INSERT INTO meter_records (
-      id, date, account_number, account_name, address, meter_number,
+      id, date, account_number, account_name, address, home_address, barangay, street_block, meter_number,
       meter_reader, sep_meter_reader, remarks, contact_number, landmark, latitude, longitude,
       image_url, date_received, sort_order, created_at, updated_at
     ) VALUES (
-      @id, @date, @accountNumber, @accountName, @address, @meterNumber,
+      @id, @date, @accountNumber, @accountName, @address, @homeAddress, @barangay, @streetBlock, @meterNumber,
       @meterReader, @sepMeterReader, @remarks, @contactNumber, @landmark, @latitude, @longitude,
       @imageUrl, @dateReceived, @sortOrder, @createdAt, @updatedAt
     )
@@ -129,6 +135,9 @@ export function upsertMeterRecordCopy(record: MeterRecord) {
       account_number = excluded.account_number,
       account_name = excluded.account_name,
       address = excluded.address,
+      home_address = excluded.home_address,
+      barangay = excluded.barangay,
+      street_block = excluded.street_block,
       meter_number = excluded.meter_number,
       meter_reader = excluded.meter_reader,
       sep_meter_reader = excluded.sep_meter_reader,
@@ -195,12 +204,12 @@ export function replaceDeletedMeterRecordsCopy(records: DeletedMeterRecord[]) {
   const clear = db.prepare("DELETE FROM deleted_meter_records");
   const insert = db.prepare(`
     INSERT INTO deleted_meter_records (
-      id, date, account_number, account_name, address, meter_number,
+      id, date, account_number, account_name, address, home_address, barangay, street_block, meter_number,
       meter_reader, sep_meter_reader, remarks, contact_number, landmark, latitude, longitude,
       image_url, date_received, sort_order, created_at, updated_at,
       deleted_at, deleted_by
     ) VALUES (
-      @id, @date, @accountNumber, @accountName, @address, @meterNumber,
+      @id, @date, @accountNumber, @accountName, @address, @homeAddress, @barangay, @streetBlock, @meterNumber,
       @meterReader, @sepMeterReader, @remarks, @contactNumber, @landmark, @latitude, @longitude,
       @imageUrl, @dateReceived, @sortOrder, @createdAt, @updatedAt,
       @deletedAt, @deletedBy
@@ -220,12 +229,12 @@ export function upsertDeletedMeterRecordCopy(record: DeletedMeterRecord) {
   const db = getOfflineDb();
   db.prepare(`
     INSERT INTO deleted_meter_records (
-      id, date, account_number, account_name, address, meter_number,
+      id, date, account_number, account_name, address, home_address, barangay, street_block, meter_number,
       meter_reader, sep_meter_reader, remarks, contact_number, landmark, latitude, longitude,
       image_url, date_received, sort_order, created_at, updated_at,
       deleted_at, deleted_by
     ) VALUES (
-      @id, @date, @accountNumber, @accountName, @address, @meterNumber,
+      @id, @date, @accountNumber, @accountName, @address, @homeAddress, @barangay, @streetBlock, @meterNumber,
       @meterReader, @sepMeterReader, @remarks, @contactNumber, @landmark, @latitude, @longitude,
       @imageUrl, @dateReceived, @sortOrder, @createdAt, @updatedAt,
       @deletedAt, @deletedBy
@@ -235,6 +244,9 @@ export function upsertDeletedMeterRecordCopy(record: DeletedMeterRecord) {
       account_number = excluded.account_number,
       account_name = excluded.account_name,
       address = excluded.address,
+      home_address = excluded.home_address,
+      barangay = excluded.barangay,
+      street_block = excluded.street_block,
       meter_number = excluded.meter_number,
       meter_reader = excluded.meter_reader,
       sep_meter_reader = excluded.sep_meter_reader,

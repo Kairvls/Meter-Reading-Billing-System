@@ -4,7 +4,11 @@ export type MeterRecordInput = {
   date: string; // YYYY-MM-DD
   accountNumber: string; // 00-0000-0000
   accountName: string; // Last, First, Middle
+  /** Municipality / City (dropdown maintenance list) */
   address: string;
+  homeAddress: string;
+  barangay: string;
+  streetBlock: string; // St./Blk/Sitio/Purok
   meterNumber: string;
   meterReader: string;
   sepMeterReader: string;
