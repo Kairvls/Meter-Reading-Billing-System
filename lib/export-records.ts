@@ -223,8 +223,8 @@ export async function exportRecordsToPdf(
     head: [reportHeaders as unknown as string[]],
     body: reportRows(records),
     styles: {
-      fontSize: 11,
-      cellPadding: 5,
+      fontSize: 8.5,
+      cellPadding: 3.5,
       lineColor: [0, 0, 0],
       lineWidth: 0.4,
       textColor: [0, 0, 0],
@@ -234,12 +234,12 @@ export async function exportRecordsToPdf(
       fillColor: [255, 255, 255],
       textColor: [0, 0, 0],
       fontStyle: "bold",
-      fontSize: 11,
+      fontSize: 8.5,
       halign: "center",
       lineColor: [0, 0, 0],
       lineWidth: 0.4,
     },
-    bodyStyles: { fillColor: [255, 255, 255] },
+    bodyStyles: { fillColor: [255, 255, 255], fontSize: 8.5 },
     columnStyles: { 0: { halign: "center" } },
     margin: { left: 24, right: 24, bottom: 120 },
   });
@@ -366,11 +366,11 @@ export function printRecords(
       width: 100%;
       border-collapse: collapse;
       table-layout: fixed;
-      font-size: 15px;
+      font-size: 11px;
     }
     th, td {
       border: 1px solid #000;
-      padding: 7px 8px;
+      padding: 4px 5px;
       vertical-align: middle;
       word-wrap: break-word;
     }
@@ -378,7 +378,10 @@ export function printRecords(
       background: #fff;
       font-weight: 700;
       text-align: center;
-      font-size: 15px;
+      font-size: 10.5px;
+    }
+    td {
+      font-size: 11px;
     }
     td.center { text-align: center; }
     .signatures {

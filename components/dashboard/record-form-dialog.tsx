@@ -271,7 +271,7 @@ export function RecordFormDialog({
               <p className="text-xs text-[#9aabba]">Format: 00-0000-0000</p>
             </Field>
 
-            <Field label="Last name" htmlFor="lastName" required>
+            <Field label="MCO Last name" htmlFor="lastName" required>
               <Input
                 id="lastName"
                 className={fieldInputClass}
@@ -280,7 +280,7 @@ export function RecordFormDialog({
                 required
               />
             </Field>
-            <Field label="First name" htmlFor="firstName" required>
+            <Field label="MCO First name" htmlFor="firstName" required>
               <Input
                 id="firstName"
                 className={fieldInputClass}
@@ -289,7 +289,7 @@ export function RecordFormDialog({
                 required
               />
             </Field>
-            <Field label="Middle name" htmlFor="middleName">
+            <Field label="MCO Middle name" htmlFor="middleName">
               <Input
                 id="middleName"
                 className={fieldInputClass}
