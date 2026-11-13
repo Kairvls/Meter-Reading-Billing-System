@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { FileUpIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { parseLookupNamesFromExcel } from "@/lib/import-lookups";
 import type { LookupItem, LookupKind } from "@/lib/lookups";
 
 type Props = {
@@ -121,21 +122,18 @@ export function LookupsMaintenance({ kind, title, description }: Props) {
   }
 
   async function handleUpload(file: File) {
+    if (!file.name.toLowerCase().endsWith(".xlsx")) {
+      toast.error("Please upload an .xlsx Excel file");
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
+
     try {
-      const text = await file.text();
-      const names = text
-        .split(/\r?\n/)
-        .map((line) => line.split(/[,\t]/)[0]?.trim() || "")
-        .filter(Boolean)
-        .filter(
-          (line) =>
-            !/^(name|meter reader|address|reader|municipality|city)$/i.test(
-              line
-            )
-        );
+      const buffer = await file.arrayBuffer();
+      const names = await parseLookupNamesFromExcel(buffer);
 
       if (names.length === 0) {
-        toast.error("No names found in file");
+        toast.error("No names found in the first column of the Excel file");
         return;
       }
 
@@ -170,7 +168,7 @@ export function LookupsMaintenance({ kind, title, description }: Props) {
             <input
               ref={fileRef}
               type="file"
-              accept=".txt,.csv"
+              accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
@@ -184,7 +182,7 @@ export function LookupsMaintenance({ kind, title, description }: Props) {
               onClick={() => fileRef.current?.click()}
             >
               <FileUpIcon />
-              Upload list
+              Upload Excel
             </Button>
           </div>
         </div>
@@ -261,7 +259,7 @@ export function LookupsMaintenance({ kind, title, description }: Props) {
           </p>
         ) : items.length === 0 ? (
           <p className="px-5 py-10 text-center text-[15px] text-[#6b7c89]">
-            No items yet. Add one or more names, or upload a list (.txt / .csv).
+            No items yet. Add one or more names, or upload an Excel list (.xlsx).
           </p>
         ) : (
           <ul className="divide-y divide-[#eef3f6]">
